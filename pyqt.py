@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
 
         # Call the processing functions in order
         self.df = self.remove_unwanted_columns(self.df)
-        #self.df = self.remove_outliers(self.df)
+        self.df = self.remove_outliers(self.df)
         #self.df = self.fill_missing_values(self.df)
         #self.df, label_encoders, label_mappings = self.encode_categorical(self.df)
 
@@ -222,11 +222,27 @@ class MainWindow(QMainWindow):
         self.log_message("Removed unwanted columns.")
         return df
 
+    def remove_outliers(self, df):
+        """
+                Function to remove the outliers all numeric columns, namely there are some values in age that reach the 65,000 mark
+        """
+        self.log_message("Removing Outliers")
+
+        numerical_columns = ["age", "TSH", "T3", "TT4", "T4U", "FTI", "TBG"]
+        Q1 = df[numerical_columns].quantile(0.25)
+        Q3 = df[numerical_columns].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        df_no_outliers = df[
+            ~((df[numerical_columns] < lower_bound) | (df[numerical_columns] > upper_bound)).any(axis=1)]
+
+        self.log_message(f"Outliers removed: {len(df) - len(df_no_outliers)} rows dropped.")
+        return df_no_outliers
+
     ###### ALL THE BELOW FUNCTIONS NEED TO BE MANAGED
     ###### BY A GENERAL FUNCTION THAT WILL BE CALLED
     ###### FROM THE LOAD BUTTON
-
-    # TODO: Implement remove unwated columns
 
     # TODO: Implement remove outliers
 
