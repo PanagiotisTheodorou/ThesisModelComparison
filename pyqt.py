@@ -1,4 +1,6 @@
 import sys
+import time
+
 import pandas as pd
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QTabWidget,
@@ -8,6 +10,7 @@ from PyQt6.QtGui import QFont, QAction
 from PyQt6.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from datetime import datetime
 
 
 class MatplotlibCanvas(FigureCanvas):
@@ -81,6 +84,7 @@ class MainWindow(QMainWindow):
             operations_layout.addWidget(btn)
 
         self.import_button.clicked.connect(self.load_file)
+        self.load_button.clicked.connect(self.process_data_pipeline)
         main_layout.addLayout(operations_layout)
 
         # File Path Display
@@ -158,6 +162,10 @@ class MainWindow(QMainWindow):
         # Set default theme
         self.set_light_theme()
 
+    def log_message(self, message):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.log_text_edit.append(f"[{timestamp}] {message}")
+
     def load_file(self):
         file_dialog = QFileDialog()
         file_path, _ = file_dialog.getOpenFileName(self, "Open File", "", "CSV Files (*.csv);;All Files (*.*)")
@@ -172,11 +180,83 @@ class MainWindow(QMainWindow):
         """
         try:
             df = pd.read_csv(file_path, na_values='?')  # Replace '?' with NaN
-            self.log_text_edit.append("Dataset loaded successfully!")
+            self.log_message("Dataset loaded successfully!")
             return df
         except Exception as e:
-            self.log_text_edit.append(f"Failed to load dataset: {str(e)}")
+            self.log_message(f"Failed to load dataset: {str(e)}")
             return None
+
+    def process_data_pipeline(self):
+        if self.df is None:
+            self.log_message("No dataset found")
+            return
+
+        start_time = time.time()
+        self.log_message("Starting Data processing...")
+
+        # Call the processing functions in order
+        self.df = self.remove_unwanted_columns(self.df)
+        #self.df = self.remove_outliers(self.df)
+        #self.df = self.fill_missing_values(self.df)
+        #self.df, label_encoders, label_mappings = self.encode_categorical(self.df)
+
+        # Log categorical mappings instead of printing
+        self.log_message("\nCategorical Data Mappings:")
+        #for col, mapping in label_mappings.items():
+        #    self.log_message(f"{col}: {mapping}")
+
+        elapsed_time = time.time() - start_time
+        self.log_message(f"Data processing completed in {elapsed_time:.2f} seconds")
+
+        self.update_table()
+
+    def remove_unwanted_columns(self, df):
+        """
+        :param df:
+        :return: df:
+        function removes the unwanted columsn
+        """
+        columns_to_drop = [col for col in df.columns if
+                           'measured' in col.lower()]  # Remove all columns that have to do with measured -> Mutually Exclusives
+        df.drop(columns=columns_to_drop, inplace=True)
+        self.log_message("Removed unwanted columns.")
+        return df
+
+    ###### ALL THE BELOW FUNCTIONS NEED TO BE MANAGED
+    ###### BY A GENERAL FUNCTION THAT WILL BE CALLED
+    ###### FROM THE LOAD BUTTON
+
+    # TODO: Implement remove unwated columns
+
+    # TODO: Implement remove outliers
+
+    # TODO: Implement fill missing values
+
+    # TODO: Implement encode categorical data
+
+    # TODO: Implement dataset balancing
+
+    # TODO: Implement feature selection
+
+    ###### THE TRAIN MODEL BUTTON WILL CALL THE BELOW FUNCTIONS
+    ###### THESE ALSO NEED TO BE MANAGED BY A FUNCTION
+
+    # TODO: Implement train model function -> results are stored in the logs
+
+    # these need to be set with global variables as their results will
+    # be shown in the results tab
+
+    # TODO: Implement check overfit
+
+    # TODO: Implement decode_predictions
+
+    # TODO: Implement print_class_mapping
+
+    ###### THE BELOW FUNCTIONS NEED TO BE CALLED UPON PRESSING
+    ###### A NEW BUTTON TO PERFORM DATA ANALYSIS
+
+    # TODO: plot_roc_auc, construct_confussion_matrix
+
 
     def update_table(self):
         """
