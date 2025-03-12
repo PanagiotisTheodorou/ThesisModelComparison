@@ -11,6 +11,7 @@ from PyQt6.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from datetime import datetime
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 
 class MatplotlibCanvas(FigureCanvas):
@@ -25,6 +26,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("ML Model Trainer")
         self.setGeometry(100, 100, 800, 600)
+
+        self.df: pd.DataFrame = pd.DataFrame()
 
         self.initUI()
 
@@ -254,6 +257,28 @@ class MainWindow(QMainWindow):
                 df[col] = df[col].fillna(df[col].mean())
 
         self.log_message("Missing Values filled")
+
+    def encode_categorical(self, df):
+        """
+        Function to encode categorical data using label encoding.
+        This is done so that the model can understand the categories.
+        It also stores the mapping for decoding labels later.
+        """
+
+        print("\nEncoding categorical variables...")
+
+        label_encoders = {}
+        label_mappings = {}
+
+        for col in df.select_dtypes(include=['object']).columns:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col])
+            label_encoders[col] = le
+            label_mappings[col] = dict(enumerate(le.classes_))  # Store mapping
+
+        print("Categorical columns encoded.\n")
+
+        return df, label_encoders, label_mappings
 
     ###### ALL THE BELOW FUNCTIONS NEED TO BE MANAGED
     ###### BY A GENERAL FUNCTION THAT WILL BE CALLED
