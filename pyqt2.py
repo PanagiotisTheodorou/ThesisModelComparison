@@ -10,23 +10,30 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from datetime import datetime
 import pandas as pd
-import numpy as np
-from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_recall_curve, f1_score, \
-    roc_auc_score, roc_curve, auc
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
-from imblearn.over_sampling import SMOTE
-from sklearn.preprocessing import label_binarize
-from colorama import colorama_text, Fore, Style
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.metrics import confusion_matrix
+from colorama import Fore, Style
 
 
 # Global dataframe
 df = pd.DataFrame()
 
+from pyqt_charts import plot_prediction_distribution, plot_precision_recall_curve, plot_feature_importance, construct_confusion_matrix_visual, plot_roc_auc
+
+# Import utility functions
+from general_utils import (
+    decode_predictions,
+    remove_unwanted_columns,
+    remove_outliers,
+    fill_missing_values,
+    encode_categorical
+)
+
+from train_RFQ import train_model
+
+from train_SVM import train_SVM
+
+from postprocessing_utils import construct_confussion_matrix_logical, check_overfitting
+
+from train_LF import train_LF
 
 class MatplotlibCanvas(FigureCanvas):
     def __init__(self, parent=None):
@@ -321,6 +328,10 @@ class MainWindow(QMainWindow):
             self.log_message("Performing stratified train-test split")
             self.log_message("Hyperparameter tuning using GridSearchCV")
             model, X_train, X_test, y_train, y_test, acr, best_params, cr = train_model(df, target_column, self.label_mappings)
+            #model, X_train, X_test, y_train, y_test, acr, best_params, cr = train_LF(df, target_column, self.label_mappings)
+            #model, X_train, X_test, y_train, y_test, acr, best_params, cr = train_SVM(df, target_column, self.label_mappings)
+
+
             self.log_message(f"Accuracy: {acr:.4f}")
             self.log_message(f"Best Parameters: {str(best_params)}")
 
@@ -337,11 +348,11 @@ class MainWindow(QMainWindow):
                 self.log_message("No significant overfitting detected.")
 
             # Construct and display confusion matrix and additional metrics in the console
-            #construct_confussion_matrix_logical(model, X_test, y_test, self.label_mappings, model_name="Random Forest")
+            construct_confussion_matrix_logical(model, X_test, y_test, self.label_mappings, model_name="Random Forest")
 
             # Construct and display confusion matrix
             self.log_message("Generating Confusion Matrix")
-            cm_fig = construct_confussion_matrix_visual(model, X_test, y_test, self.label_mappings, model_name="Random Forest")
+            cm_fig = construct_confusion_matrix_visual(model, X_test, y_test, self.label_mappings, model_name="Random Forest")
             self.add_chart_to_results_tab(cm_fig, row=0, col=0)
 
             # Plot ROC curve and embed it in the Results tab
@@ -382,535 +393,6 @@ class MainWindow(QMainWindow):
     def set_dark_theme(self):
         self.setStyleSheet("background-color: #2E2E2E; color: white;")
 
-
-def remove_unwanted_columns(df):
-    print(Fore.GREEN + "\nRemoving unwanted columns" + Style.RESET_ALL)
-    columns_to_drop = [col for col in df.columns if 'measured' in col.lower()]
-    df.drop(columns=columns_to_drop, inplace=True)
-    print(Fore.LIGHTGREEN_EX + f"Dropped columns: {columns_to_drop}\n" + Style.RESET_ALL)
-    return df, columns_to_drop
-
-
-def remove_outliers(df):
-    print(Fore.GREEN + "\nRemoving outliers..." + Style.RESET_ALL)
-    numerical_columns = ["age", "TSH", "T3", "TT4", "T4U", "FTI", "TBG"]
-    Q1 = df[numerical_columns].quantile(0.25)
-    Q3 = df[numerical_columns].quantile(0.75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    df_no_outliers = df[~((df[numerical_columns] < lower_bound) | (df[numerical_columns] > upper_bound)).any(axis=1)]
-    print(Fore.LIGHTGREEN_EX + f"Outliers removed: {len(df) - len(df_no_outliers)} rows dropped." + Style.RESET_ALL)
-    return df, df_no_outliers
-
-
-def fill_missing_values(df):
-    print(Fore.GREEN + "\nFilling missing values..." + Style.RESET_ALL)
-    for col in df.columns:
-        df[col] = df[col].fillna(df[col].mode()[0] if df[col].dtype == 'object' else df[col].mean())
-    print(Fore.LIGHTGREEN_EX + "Missing values filled.\n" + Style.RESET_ALL)
-    return df
-
-
-def encode_categorical(df):
-    print(Fore.GREEN + "\nEncoding categorical variables..." + Style.RESET_ALL)
-    label_encoders = {}
-    label_mappings = {}
-    for col in df.select_dtypes(include=['object']).columns:
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col])
-        label_encoders[col] = le
-        label_mappings[col] = dict(enumerate(le.classes_))
-    print(Fore.LIGHTGREEN_EX + "Categorical columns encoded.\n" + Style.RESET_ALL)
-    return df, label_encoders, label_mappings
-
-def balance_dataset(df, target_column):
-    """
-        Function to balance dataset
-        TODO add explanation for the formula
-    """
-    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes proportionally..." + Style.RESET_ALL)
-
-    # Count occurrences of each class
-    class_counts = df[target_column].value_counts()
-    majority_class = class_counts.idxmax()
-    minority_classes = class_counts[class_counts.index != majority_class].index
-
-    # Compute total occurrences of all minority classes
-    total_minority_occurrences = class_counts[minority_classes].sum()
-    num_minority_classes = len(minority_classes)
-
-    # Determine target occurrences for each minority class
-    target_counts = total_minority_occurrences // num_minority_classes
-    sampling_strategy = {}
-
-    for cls in minority_classes:
-        if class_counts[cls] < target_counts:
-            sampling_strategy[cls] = target_counts
-
-    # Apply SMOTE for oversampling
-    X = df.drop(columns=[target_column])
-    y = df[target_column]
-    smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
-    X_resampled, y_resampled = smote.fit_resample(X, y)
-    resampled_df = pd.DataFrame(X_resampled, columns=X.columns)
-    resampled_df[target_column] = y_resampled
-
-    # Apply equal sampling of majority class instances
-    final_data = []
-    for cls in minority_classes:
-        minority_samples = resampled_df[resampled_df[target_column] == cls]
-        majority_samples = resampled_df[resampled_df[target_column] == majority_class].sample(n=len(minority_samples),
-                                                                                              random_state=42)
-        final_data.append(minority_samples)
-        final_data.append(majority_samples)
-
-    balanced_df = pd.concat(final_data).sample(frac=1, random_state=42).reset_index(drop=True)
-
-    print(Fore.LIGHTGREEN_EX + "Dataset balanced.\n" + Style.RESET_ALL)
-
-    return balanced_df
-
-
-def feature_selection(X_train, y_train, X_test, threshold=0.01):
-    """
-    Perform feature selection using Random Forest feature importance.
-    Features with importance greater than the threshold are selected.
-    """
-    print(Fore.GREEN + "\nPerforming feature selection..." + Style.RESET_ALL)
-
-    # Train a Random Forest model to get feature importance
-    rf = RandomForestClassifier(random_state=42)
-    rf.fit(X_train, y_train)
-
-    # Get feature importances
-    importances = rf.feature_importances_
-    feature_names = X_train.columns
-
-    # Create a DataFrame to display feature importances
-    feature_importance_df = pd.DataFrame({
-        "Feature": feature_names,
-        "Importance": importances
-    }).sort_values(by="Importance", ascending=False)
-
-    # Display feature importances
-    print(Fore.CYAN + "\nFeature Importances:" + Style.RESET_ALL)
-    print(feature_importance_df)
-
-    # Select features with importance greater than the threshold
-    selected_features = feature_importance_df[feature_importance_df["Importance"] > threshold]["Feature"].tolist()
-
-    print(Fore.LIGHTGREEN_EX + f"\nSelected Features (Importance > {threshold}):" + Style.RESET_ALL)
-    print(selected_features)
-
-    # Filter the datasets to include only selected features
-    X_train_selected = X_train[selected_features]
-    X_test_selected = X_test[selected_features]
-
-    return X_train_selected, X_test_selected, feature_importance_df
-
-
-# def train_model(df, target_column, label_mappings):
-#     """
-#             Function to train the model, Steps:
-#             1. Filter rare classes, and for those apply the balancing logic
-#             2. split between dependent and non dependent column
-#             3. Split the dataset to test and train
-#             4. Create a parameter grid for hyperparameter tuning
-#             5. Create and Train the model
-#             6. Apply Grid search so that the interpreter will loop throygh the available parameters and find the best ones
-#             7. Print out the best model, and the statistics, then return the chosen model
-#         """
-#
-#     print(Fore.GREEN + "\nTraining model..." + Style.RESET_ALL)
-#
-#     print(Fore.LIGHTGREEN_EX + "Filtering rare classes..." + Style.RESET_ALL)
-#
-#     class_counts = df[target_column].value_counts()
-#     valid_classes = class_counts[class_counts >= 10].index
-#     df = df[df[target_column].isin(valid_classes)]
-#
-#     print(Fore.LIGHTGREEN_EX + "Applying dataset balancing..." + Style.RESET_ALL)
-#
-#     df = balance_dataset(df, target_column)
-#
-#     X = df.drop(columns=[target_column])
-#     y = df[target_column]
-#
-#     print(Fore.LIGHTGREEN_EX + "Performing stratified train-test split..." + Style.RESET_ALL)
-#
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-#
-#     # Perform feature selection
-#     # TODO: I can uncomment and comment this in order to add feature selection
-#     #X_train, X_test, feature_importance_df = feature_selection(X_train, y_train, X_test, threshold=0.01)
-#
-#     print(Fore.LIGHTGREEN_EX + "Hyperparameter tuning using GridSearchCV..." + Style.RESET_ALL)
-#
-#     param_grid = {
-#         "n_estimators": [50, 100, 200],
-#         "max_depth": [5, 10, 15, None],
-#         "min_samples_split": [2, 5, 10],
-#         "min_samples_leaf": [1, 2, 4],
-#         "bootstrap": [True, False]
-#     }
-#
-#     rf = RandomForestClassifier(class_weight="balanced", random_state=42)
-#     grid_search = GridSearchCV(rf, param_grid, cv=5, scoring="accuracy", n_jobs=-1)
-#     grid_search.fit(X_train, y_train)
-#
-#     print(Fore.LIGHTGREEN_EX + f"Best Parameters: {grid_search.best_params_}" + Style.RESET_ALL)
-#
-#     best_model = grid_search.best_estimator_
-#
-#     predictions = best_model.predict(X_test)
-#
-#     accuracy_scr = accuracy_score(y_test, predictions)
-#
-#     print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy_score(y_test, predictions):.4f}" + Style.RESET_ALL)
-#
-#     # Decode numeric labels back to original class labels
-#     y_test_decoded = decode_predictions(pd.Series(y_test), label_mappings, target_column)
-#     predictions_decoded = decode_predictions(pd.Series(predictions), label_mappings, target_column)
-#
-#     # Print classification report with decoded labels
-#     print(Fore.LIGHTGREEN_EX + "Classification Report:\n" + Style.RESET_ALL)
-#     cr_dict = classification_report(y_test_decoded, predictions_decoded, output_dict=True)
-#     print(classification_report(y_test_decoded, predictions_decoded))
-#
-#     return best_model, X_train, X_test, y_train, y_test, accuracy_scr, grid_search.best_params_, cr_dict
-
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
-import pandas as pd
-from colorama import Fore, Style
-
-def train_model(df, target_column, label_mappings):
-    """
-    Function to train the model without hyperparameter tuning.
-    Steps:
-    1. Filter rare classes, and for those apply the balancing logic
-    2. Split between dependent and independent columns
-    3. Split the dataset into test and train
-    4. Train the model with default or manually specified parameters
-    5. Print out the model statistics and return the trained model
-    """
-
-    print(Fore.GREEN + "\nTraining model..." + Style.RESET_ALL)
-
-    print(Fore.LIGHTGREEN_EX + "Filtering rare classes..." + Style.RESET_ALL)
-
-    # Filter rare classes
-    class_counts = df[target_column].value_counts()
-    valid_classes = class_counts[class_counts >= 10].index
-    df = df[df[target_column].isin(valid_classes)]
-
-    print(Fore.LIGHTGREEN_EX + "Applying dataset balancing..." + Style.RESET_ALL)
-
-    # Balance the dataset
-    df = balance_dataset(df, target_column)
-
-    # Split into features and target
-    X = df.drop(columns=[target_column])
-    y = df[target_column]
-
-    print(Fore.LIGHTGREEN_EX + "Performing stratified train-test split..." + Style.RESET_ALL)
-
-    # Split into train and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-
-    print(Fore.LIGHTGREEN_EX + "Training Random Forest model..." + Style.RESET_ALL)
-
-    # Train the Random Forest model with default or manually specified parameters
-    rf = RandomForestClassifier(
-        class_weight="balanced",
-        random_state=42,
-        n_estimators=100,  # Default is 100
-        max_depth=None,     # Default is None (nodes are expanded until all leaves are pure)
-        min_samples_split=2,  # Default is 2
-        min_samples_leaf=1,   # Default is 1
-        bootstrap=True        # Default is True
-    )
-    rf.fit(X_train, y_train)
-
-    # Make predictions
-    predictions = rf.predict(X_test)
-
-    # Calculate accuracy
-    accuracy_scr = accuracy_score(y_test, predictions)
-
-    print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy_scr:.4f}" + Style.RESET_ALL)
-
-    # Decode numeric labels back to original class labels
-    y_test_decoded = decode_predictions(pd.Series(y_test), label_mappings, target_column)
-    predictions_decoded = decode_predictions(pd.Series(predictions), label_mappings, target_column)
-
-    # Print classification report with decoded labels
-    print(Fore.LIGHTGREEN_EX + "Classification Report:\n" + Style.RESET_ALL)
-    cr_dict = classification_report(y_test_decoded, predictions_decoded, output_dict=True)
-    print(classification_report(y_test_decoded, predictions_decoded))
-
-    return rf, X_train, X_test, y_train, y_test, accuracy_scr, {}, cr_dict
-
-def decode_predictions(predictions, label_mappings, column_name):
-    """
-    Convert numerical predictions back to categorical labels.
-    """
-    return predictions.map(label_mappings[column_name])
-
-
-def check_overfitting(model, X_train, y_train, X_test, y_test):
-    """
-    Function to check for overfitting by comparing training and test accuracy.
-    Also performs cross-validation to verify model generalization.
-    """
-    print(Fore.GREEN + "\nChecking for Overfitting..." + Style.RESET_ALL)
-
-    # Predict on training and test sets
-    y_train_pred = model.predict(X_train)
-    y_test_pred = model.predict(X_test)
-
-    # Compute accuracies
-    train_acc = accuracy_score(y_train, y_train_pred)
-    test_acc = accuracy_score(y_test, y_test_pred)
-
-    print(Fore.LIGHTGREEN_EX + f"Training Accuracy: {train_acc:.4f}" + Style.RESET_ALL)
-    print(Fore.LIGHTGREEN_EX + f"Test Accuracy: {test_acc:.4f}" + Style.RESET_ALL)
-
-    # Perform cross-validation
-    cv_scores = cross_val_score(model, X_train, y_train, cv=10, scoring="accuracy")
-    cross_acc = cv_scores.mean()
-    cross_std = cv_scores.std()
-    print(Fore.LIGHTGREEN_EX + f"Cross-Validation Accuracy: {cv_scores.mean():.4f} +/- {cv_scores.std():.4f}" + Style.RESET_ALL)
-
-    # Check for overfitting
-    if train_acc > test_acc + 0.05:  # If train accuracy is much higher than test accuracy
-        print(Fore.RED + "Possible Overfitting Detected!" + Style.RESET_ALL)
-    else:
-        print(Fore.LIGHTGREEN_EX + "No significant overfitting detected." + Style.RESET_ALL)
-
-    return train_acc, test_acc, cross_acc, cross_std
-
-
-def construct_confussion_matrix_logical(model, X_test, y_test, label_mappings, model_name):
-    """
-    Function to print evaluation metrics for the model.
-    It prints accuracy, weighted F1 score, confusion matrix,
-    classification report, and multi-class ROC AUC score.
-    """
-    # Predict the results
-    y_pred = model.predict(X_test)
-
-    # Compute accuracy, confusion matrix, and classification report
-    accuracy = accuracy_score(y_test, y_pred)
-    cm = confusion_matrix(y_test, y_pred)
-    report = classification_report(y_test, y_pred)
-
-    # Compute weighted F1 score for multi-class
-    f1 = f1_score(y_test, y_pred, average='weighted')
-
-    # Compute ROC AUC using one-vs-rest strategy
-    try:
-        classes = np.unique(y_test)
-        y_test_bin = label_binarize(y_test, classes=classes)
-        y_scores = model.predict_proba(X_test)
-        roc_auc = roc_auc_score(y_test_bin, y_scores, multi_class='ovr')
-    except Exception as e:
-        roc_auc = "Not Available"
-
-    # Print the evaluation metrics
-    print(Fore.GREEN + f"\n--- {model_name} Evaluation ---\n" + Style.RESET_ALL)
-    print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy} | {accuracy:.4f}" + Style.RESET_ALL)
-    print(Fore.LIGHTGREEN_EX + f"Weighted F1 Score: {f1} | {f1:.4f}\n" + Style.RESET_ALL)
-
-    # Decode class labels for confusion matrix
-    class_labels = [label_mappings['class'][cls] for cls in classes]
-
-    # Print labeled confusion matrix
-    print(Fore.CYAN + "Confusion Matrix (with class labels):" + Style.RESET_ALL)
-    cm_df = pd.DataFrame(cm, index=class_labels, columns=class_labels)
-    print(cm_df)
-    print("\n")
-
-    print(Fore.LIGHTGREEN_EX + f"Multi-Class ROC AUC (One-vs-Rest): {roc_auc}" + Style.RESET_ALL)
-
-    # Calculate TP, TN, FP, FN for each class
-    print(Fore.LIGHTGREEN_EX + "\nShowing the TP, TN, FP, FN rate for each class:" + Style.RESET_ALL)
-    print('-------------------------')
-    for i, class_label in enumerate(class_labels):  # Use decoded class labels
-        TP = cm[i, i]  # True Positives for the current class
-        FP = cm[:, i].sum() - TP  # False Positives for the current class
-        FN = cm[i, :].sum() - TP  # False Negatives for the current class
-        TN = cm.sum() - (TP + FP + FN)  # True Negatives for the current class
-
-        print(Fore.YELLOW + f"Class {class_label}:" + Style.RESET_ALL)
-        print(Fore.GREEN + f"True Positives (TP): {TP}" + Style.RESET_ALL)
-        print(Fore.RED + f"False Positives (FP): {FP}" + Style.RESET_ALL)
-        print(Fore.RED + f"False Negatives (FN): {FN}" + Style.RESET_ALL)
-        print(Fore.GREEN + f"True Negatives (TN): {TN}" + Style.RESET_ALL)
-        print('-------------------------')
-
-    return accuracy, f1, roc_auc, cm, report
-
-
-def plot_roc_auc(model, X_test, y_test):
-    """
-    Function to create a plot for the AUC and ROC curves.
-    It takes the labels (classes), gets the probability metrics,
-    and calculates the AUC ROC curve for all.
-    Returns:
-        matplotlib.figure.Figure: The ROC curve plot.
-    """
-    from matplotlib.figure import Figure
-
-    classes = np.unique(y_test)  # Dynamically get unique classes
-    y_test_bin = label_binarize(y_test, classes=classes)
-    y_scores = model.predict_proba(X_test)  # Get probability scores
-
-    fig = Figure(figsize=(10, 8))
-    ax = fig.add_subplot(111)
-
-    for i in range(y_test_bin.shape[1]):
-        if np.sum(y_test_bin[:, i]) == 0:  # Skip classes with no positive samples
-            print(f"Skipping class {classes[i]} (no positive samples)")
-            continue
-        fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_scores[:, i])
-        roc_auc = auc(fpr, tpr)
-        ax.plot(fpr, tpr, label=f'Class {classes[i]} (AUC = {roc_auc:.2f})')
-
-    ax.plot([0, 1], [0, 1], 'k--')  # Diagonal line
-    ax.set_xlabel("False Positive Rate")
-    ax.set_ylabel("True Positive Rate")
-    ax.set_title("Multi-Class ROC Curve")
-    ax.legend()
-
-    # Move legend outside the plot and reduce font size
-    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')
-
-    # Adjust layout to make room for the legend
-    fig.tight_layout()
-
-    return fig
-
-def construct_confussion_matrix_visual(model, X_test, y_test, label_mappings, model_name):
-    """
-    Function to create and return a confusion matrix plot.
-    """
-    # Predict the results
-    y_pred = model.predict(X_test)
-
-    # Compute confusion matrix
-    cm = confusion_matrix(y_test, y_pred)
-
-    # Decode class labels for confusion matrix
-    classes = np.unique(y_test)
-    class_labels = [label_mappings['class'][cls] for cls in classes]
-
-    # Create a figure for the confusion matrix
-    fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_labels, yticklabels=class_labels, ax=ax)
-    ax.set_xlabel('Predicted')
-    ax.set_ylabel('Actual')
-    ax.set_title(f'Confusion Matrix for {model_name}')
-
-    return fig
-
-def plot_feature_importance(model, feature_names):
-    """
-    Function to create a feature importance plot.
-    Args:
-        model: Trained model (e.g., RandomForestClassifier).
-        feature_names: List of feature names.
-    Returns:
-        matplotlib.figure.Figure: The feature importance plot.
-    """
-    from matplotlib.figure import Figure
-
-    # Get feature importances
-    importances = model.feature_importances_
-    indices = np.argsort(importances)[::-1]  # Sort in descending order
-
-    # Create the plot
-    fig = Figure(figsize=(10, 6))
-    ax = fig.add_subplot(111)
-    ax.bar(range(len(importances)), importances[indices], align="center")
-    ax.set_xticks(range(len(importances)))
-    ax.set_xticklabels([feature_names[i] for i in indices], rotation=90)
-    ax.set_xlabel("Feature")
-    ax.set_ylabel("Importance")
-    ax.set_title("Feature Importance")
-
-    # Adjust layout
-    fig.tight_layout()
-
-    return fig
-
-
-def plot_precision_recall_curve(model: object, X_test: object, y_test: object) -> object:
-    """
-    Function to create a precision-recall curve.
-    :param model
-    :param X_test
-    :param y_test
-    :return fig
-    """
-
-    from matplotlib.figure import Figure
-    from sklearn.metrics import precision_recall_curve, average_precision_score
-
-    # Get predicted probabilities
-    y_scores = model.predict_proba(X_test)
-
-    # Compute precision-recall curve for each class
-    classes = np.unique(y_test)
-    y_test_bin = label_binarize(y_test, classes=classes)
-
-    fig = Figure(figsize=(10, 6))
-    ax = fig.add_subplot(111)
-
-    for i in range(y_test_bin.shape[1]):
-        precision, recall, _ = precision_recall_curve(y_test_bin[:, i], y_scores[:, i])
-        avg_precision = average_precision_score(y_test_bin[:, i], y_scores[:, i])
-        ax.plot(recall, precision, label=f'Class {classes[i]} (AP = {avg_precision:.2f})')
-
-    ax.set_xlabel("Recall")
-    ax.set_ylabel("Precision")
-    ax.set_title("Precision-Recall Curve")
-    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')  # Move legend outside
-    fig.tight_layout()
-
-    return fig
-
-def plot_prediction_distribution(y_test: object, y_pred: object, label_mappings: object) -> object:
-    """
-    Function to create a distribution plot of predicted classes.
-    :param y_test
-    :param y_pred
-    :param label_mappings
-    :return fig
-    """
-    from matplotlib.figure import Figure
-    import seaborn as sns
-
-    # Decode numeric labels back to original class labels
-    y_test_decoded = decode_predictions(pd.Series(y_test), label_mappings, 'class')
-    y_pred_decoded = decode_predictions(pd.Series(y_pred), label_mappings, 'class')
-
-    # Create a DataFrame for visualization
-    df = pd.DataFrame({'True Class': y_test_decoded, 'Predicted Class': y_pred_decoded})
-
-    # Create the plot
-    fig = Figure(figsize=(10, 6))
-    ax = fig.add_subplot(111)
-    sns.countplot(data=df, x='Predicted Class', hue='True Class', ax=ax)
-    ax.set_xlabel("Predicted Class")
-    ax.set_ylabel("Count")
-    ax.set_title("Distribution of Predictions")
-    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')  # Move legend outside
-    fig.tight_layout()
-
-    return fig
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
