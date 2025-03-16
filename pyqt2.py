@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QTabWidget,
     QHBoxLayout, QFileDialog, QMenuBar, QMenu, QTableWidget, QTableWidgetItem, QSpinBox,
-    QTextEdit, QProgressDialog, QDialog, QGridLayout, QFrame, QSizePolicy
+    QTextEdit, QProgressDialog, QDialog, QScrollArea, QFrame, QSizePolicy
 )
 from PyQt6.QtGui import QFont, QAction, QMovie
 from PyQt6.QtCore import Qt
@@ -19,6 +19,9 @@ from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_sc
 from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import label_binarize
 from colorama import colorama_text, Fore, Style
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 
 
 # Global dataframe
@@ -166,39 +169,16 @@ class MainWindow(QMainWindow):
 
         # Results Tab
         self.results_tab = QWidget()
-        results_layout = QGridLayout()
-        self.results_tab.setLayout(results_layout)
+        self.results_layout = QVBoxLayout()  # Single-column layout for charts
+        self.results_tab.setLayout(self.results_layout)
 
-        # Create 6 sections (2 columns x 3 rows)
-        self.chart_widgets = []  # Store matplotlib canvases
-
-        for row in range(3):
-            for col in range(2):
-                chart_frame = QFrame()
-                chart_frame.setFrameShape(QFrame.Shape.Box)
-                chart_frame.setFixedSize(350, 250)  # Adjust size as needed
-                layout = QVBoxLayout(chart_frame)
-
-                # Placeholder title
-                chart_title = QLabel(f"Chart {row * 2 + col + 1}")
-                chart_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                layout.addWidget(chart_title)
-
-                # Create Matplotlib figure only for the first section
-                if row == 0 and col == 0:
-                    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-                    from matplotlib.figure import Figure
-
-                    fig = Figure(figsize=(3, 2))
-                    ax = fig.add_subplot(111)
-                    ax.plot([1, 2, 3, 4], [10, 20, 25, 30], marker='o')  # Dummy data
-                    ax.set_title("Sample Chart")
-
-                    canvas = FigureCanvas(fig)
-                    layout.addWidget(canvas)
-                    self.chart_widgets.append(canvas)
-
-                results_layout.addWidget(chart_frame, row, col)
+        # Add a QScrollArea to handle overflow
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)  # Allow the widget to resize
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_content)  # Layout for scrollable content
+        self.scroll_area.setWidget(self.scroll_content)  # Set the scrollable content
+        self.results_layout.addWidget(self.scroll_area)  # Add the scroll area to the results tab
 
         # allocate tabs
         self.tabs.addTab(self.data_tab, "Data")
@@ -281,14 +261,19 @@ class MainWindow(QMainWindow):
         # Create a canvas to embed the figure
         canvas = FigureCanvas(fig)
 
-        # Remove any existing widget in the specified grid position
-        existing_widget = self.results_tab.layout().itemAtPosition(row, col).widget()
-        if existing_widget:
-            existing_widget.deleteLater()
+        # Create a frame for the chart
+        chart_frame = QFrame()
+        chart_frame.setFrameShape(QFrame.Shape.Box)
+        chart_frame.setMinimumSize(600, 600)  # Set a minimum size to ensure visibility
+        layout = QVBoxLayout(chart_frame)
+        layout.addWidget(canvas)
 
-        # Add the canvas to the specified grid position
-        self.results_tab.layout().addWidget(canvas, row, col)
+        # Add the chart frame to the scroll layout
+        self.scroll_layout.addWidget(chart_frame)
         canvas.draw()  # Render the plot
+
+        # Ensure the scroll area updates
+        self.scroll_content.adjustSize()
 
 
     def perform_processing(self):
@@ -352,12 +337,34 @@ class MainWindow(QMainWindow):
                 self.log_message("No significant overfitting detected.")
 
             # Construct and display confusion matrix and additional metrics in the console
-            construct_confussion_matrix(model, X_test, y_test, self.label_mappings, model_name="Random Forest")
+            #construct_confussion_matrix_logical(model, X_test, y_test, self.label_mappings, model_name="Random Forest")
+
+            # Construct and display confusion matrix
+            self.log_message("Generating Confusion Matrix")
+            cm_fig = construct_confussion_matrix_visual(model, X_test, y_test, self.label_mappings, model_name="Random Forest")
+            self.add_chart_to_results_tab(cm_fig, row=0, col=0)
 
             # Plot ROC curve and embed it in the Results tab
             self.log_message("Generating ROC Curve")
             roc_fig = plot_roc_auc(model, X_test, y_test)
-            self.add_chart_to_results_tab(roc_fig, row=0, col=0)  # Add to the first chart section
+            self.add_chart_to_results_tab(roc_fig, row=1, col=1)  # Add to the first chart section
+
+            # Plot Feature Importance
+            self.log_message("Generating Feature Importance Plot")
+            feature_names = X_train.columns.tolist()
+            feature_importance_fig = plot_feature_importance(model, feature_names)
+            self.add_chart_to_results_tab(feature_importance_fig, row=2, col=2)
+
+            # Plot Precision-Recall Curve
+            self.log_message("Generating Precision-Recall Curve")
+            pr_curve_fig = plot_precision_recall_curve(model, X_test, y_test)
+            self.add_chart_to_results_tab(pr_curve_fig, row=3, col=3)
+
+            # Plot Distribution of Predictions
+            self.log_message("Generating Prediction Distribution Plot")
+            y_pred = model.predict(X_test)
+            pred_dist_fig = plot_prediction_distribution(y_test, y_pred, self.label_mappings)
+            self.add_chart_to_results_tab(pred_dist_fig, row=4, col=4)
 
             self.display_data()
             print(Fore.LIGHTYELLOW_EX + "Data processing complete!\n" + Style.RESET_ALL)
@@ -503,64 +510,137 @@ def feature_selection(X_train, y_train, X_test, threshold=0.01):
     return X_train_selected, X_test_selected, feature_importance_df
 
 
+# def train_model(df, target_column, label_mappings):
+#     """
+#             Function to train the model, Steps:
+#             1. Filter rare classes, and for those apply the balancing logic
+#             2. split between dependent and non dependent column
+#             3. Split the dataset to test and train
+#             4. Create a parameter grid for hyperparameter tuning
+#             5. Create and Train the model
+#             6. Apply Grid search so that the interpreter will loop throygh the available parameters and find the best ones
+#             7. Print out the best model, and the statistics, then return the chosen model
+#         """
+#
+#     print(Fore.GREEN + "\nTraining model..." + Style.RESET_ALL)
+#
+#     print(Fore.LIGHTGREEN_EX + "Filtering rare classes..." + Style.RESET_ALL)
+#
+#     class_counts = df[target_column].value_counts()
+#     valid_classes = class_counts[class_counts >= 10].index
+#     df = df[df[target_column].isin(valid_classes)]
+#
+#     print(Fore.LIGHTGREEN_EX + "Applying dataset balancing..." + Style.RESET_ALL)
+#
+#     df = balance_dataset(df, target_column)
+#
+#     X = df.drop(columns=[target_column])
+#     y = df[target_column]
+#
+#     print(Fore.LIGHTGREEN_EX + "Performing stratified train-test split..." + Style.RESET_ALL)
+#
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+#
+#     # Perform feature selection
+#     # TODO: I can uncomment and comment this in order to add feature selection
+#     #X_train, X_test, feature_importance_df = feature_selection(X_train, y_train, X_test, threshold=0.01)
+#
+#     print(Fore.LIGHTGREEN_EX + "Hyperparameter tuning using GridSearchCV..." + Style.RESET_ALL)
+#
+#     param_grid = {
+#         "n_estimators": [50, 100, 200],
+#         "max_depth": [5, 10, 15, None],
+#         "min_samples_split": [2, 5, 10],
+#         "min_samples_leaf": [1, 2, 4],
+#         "bootstrap": [True, False]
+#     }
+#
+#     rf = RandomForestClassifier(class_weight="balanced", random_state=42)
+#     grid_search = GridSearchCV(rf, param_grid, cv=5, scoring="accuracy", n_jobs=-1)
+#     grid_search.fit(X_train, y_train)
+#
+#     print(Fore.LIGHTGREEN_EX + f"Best Parameters: {grid_search.best_params_}" + Style.RESET_ALL)
+#
+#     best_model = grid_search.best_estimator_
+#
+#     predictions = best_model.predict(X_test)
+#
+#     accuracy_scr = accuracy_score(y_test, predictions)
+#
+#     print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy_score(y_test, predictions):.4f}" + Style.RESET_ALL)
+#
+#     # Decode numeric labels back to original class labels
+#     y_test_decoded = decode_predictions(pd.Series(y_test), label_mappings, target_column)
+#     predictions_decoded = decode_predictions(pd.Series(predictions), label_mappings, target_column)
+#
+#     # Print classification report with decoded labels
+#     print(Fore.LIGHTGREEN_EX + "Classification Report:\n" + Style.RESET_ALL)
+#     cr_dict = classification_report(y_test_decoded, predictions_decoded, output_dict=True)
+#     print(classification_report(y_test_decoded, predictions_decoded))
+#
+#     return best_model, X_train, X_test, y_train, y_test, accuracy_scr, grid_search.best_params_, cr_dict
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+import pandas as pd
+from colorama import Fore, Style
+
 def train_model(df, target_column, label_mappings):
     """
-            Function to train the model, Steps:
-            1. Filter rare classes, and for those apply the balancing logic
-            2. split between dependent and non dependent column
-            3. Split the dataset to test and train
-            4. Create a parameter grid for hyperparameter tuning
-            5. Create and Train the model
-            6. Apply Grid search so that the interpreter will loop throygh the available parameters and find the best ones
-            7. Print out the best model, and the statistics, then return the chosen model
-        """
+    Function to train the model without hyperparameter tuning.
+    Steps:
+    1. Filter rare classes, and for those apply the balancing logic
+    2. Split between dependent and independent columns
+    3. Split the dataset into test and train
+    4. Train the model with default or manually specified parameters
+    5. Print out the model statistics and return the trained model
+    """
 
     print(Fore.GREEN + "\nTraining model..." + Style.RESET_ALL)
 
     print(Fore.LIGHTGREEN_EX + "Filtering rare classes..." + Style.RESET_ALL)
 
+    # Filter rare classes
     class_counts = df[target_column].value_counts()
     valid_classes = class_counts[class_counts >= 10].index
     df = df[df[target_column].isin(valid_classes)]
 
     print(Fore.LIGHTGREEN_EX + "Applying dataset balancing..." + Style.RESET_ALL)
 
+    # Balance the dataset
     df = balance_dataset(df, target_column)
 
+    # Split into features and target
     X = df.drop(columns=[target_column])
     y = df[target_column]
 
     print(Fore.LIGHTGREEN_EX + "Performing stratified train-test split..." + Style.RESET_ALL)
 
+    # Split into train and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-    # Perform feature selection
-    # TODO: I can uncomment and comment this in order to add feature selection
-    #X_train, X_test, feature_importance_df = feature_selection(X_train, y_train, X_test, threshold=0.01)
+    print(Fore.LIGHTGREEN_EX + "Training Random Forest model..." + Style.RESET_ALL)
 
-    print(Fore.LIGHTGREEN_EX + "Hyperparameter tuning using GridSearchCV..." + Style.RESET_ALL)
+    # Train the Random Forest model with default or manually specified parameters
+    rf = RandomForestClassifier(
+        class_weight="balanced",
+        random_state=42,
+        n_estimators=100,  # Default is 100
+        max_depth=None,     # Default is None (nodes are expanded until all leaves are pure)
+        min_samples_split=2,  # Default is 2
+        min_samples_leaf=1,   # Default is 1
+        bootstrap=True        # Default is True
+    )
+    rf.fit(X_train, y_train)
 
-    param_grid = {
-        "n_estimators": [50, 100, 200],
-        "max_depth": [5, 10, 15, None],
-        "min_samples_split": [2, 5, 10],
-        "min_samples_leaf": [1, 2, 4],
-        "bootstrap": [True, False]
-    }
+    # Make predictions
+    predictions = rf.predict(X_test)
 
-    rf = RandomForestClassifier(class_weight="balanced", random_state=42)
-    grid_search = GridSearchCV(rf, param_grid, cv=5, scoring="accuracy", n_jobs=-1)
-    grid_search.fit(X_train, y_train)
-
-    print(Fore.LIGHTGREEN_EX + f"Best Parameters: {grid_search.best_params_}" + Style.RESET_ALL)
-
-    best_model = grid_search.best_estimator_
-
-    predictions = best_model.predict(X_test)
-
+    # Calculate accuracy
     accuracy_scr = accuracy_score(y_test, predictions)
 
-    print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy_score(y_test, predictions):.4f}" + Style.RESET_ALL)
+    print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy_scr:.4f}" + Style.RESET_ALL)
 
     # Decode numeric labels back to original class labels
     y_test_decoded = decode_predictions(pd.Series(y_test), label_mappings, target_column)
@@ -571,8 +651,7 @@ def train_model(df, target_column, label_mappings):
     cr_dict = classification_report(y_test_decoded, predictions_decoded, output_dict=True)
     print(classification_report(y_test_decoded, predictions_decoded))
 
-    return best_model, X_train, X_test, y_train, y_test, accuracy_scr, grid_search.best_params_, cr_dict
-
+    return rf, X_train, X_test, y_train, y_test, accuracy_scr, {}, cr_dict
 
 def decode_predictions(predictions, label_mappings, column_name):
     """
@@ -614,7 +693,7 @@ def check_overfitting(model, X_train, y_train, X_test, y_test):
     return train_acc, test_acc, cross_acc, cross_std
 
 
-def construct_confussion_matrix(model, X_test, y_test, label_mappings, model_name):
+def construct_confussion_matrix_logical(model, X_test, y_test, label_mappings, model_name):
     """
     Function to print evaluation metrics for the model.
     It prints accuracy, weighted F1 score, confusion matrix,
@@ -689,7 +768,7 @@ def plot_roc_auc(model, X_test, y_test):
     y_test_bin = label_binarize(y_test, classes=classes)
     y_scores = model.predict_proba(X_test)  # Get probability scores
 
-    fig = Figure(figsize=(10, 6))
+    fig = Figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
 
     for i in range(y_test_bin.shape[1]):
@@ -705,6 +784,131 @@ def plot_roc_auc(model, X_test, y_test):
     ax.set_ylabel("True Positive Rate")
     ax.set_title("Multi-Class ROC Curve")
     ax.legend()
+
+    # Move legend outside the plot and reduce font size
+    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')
+
+    # Adjust layout to make room for the legend
+    fig.tight_layout()
+
+    return fig
+
+def construct_confussion_matrix_visual(model, X_test, y_test, label_mappings, model_name):
+    """
+    Function to create and return a confusion matrix plot.
+    """
+    # Predict the results
+    y_pred = model.predict(X_test)
+
+    # Compute confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+
+    # Decode class labels for confusion matrix
+    classes = np.unique(y_test)
+    class_labels = [label_mappings['class'][cls] for cls in classes]
+
+    # Create a figure for the confusion matrix
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_labels, yticklabels=class_labels, ax=ax)
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('Actual')
+    ax.set_title(f'Confusion Matrix for {model_name}')
+
+    return fig
+
+def plot_feature_importance(model, feature_names):
+    """
+    Function to create a feature importance plot.
+    Args:
+        model: Trained model (e.g., RandomForestClassifier).
+        feature_names: List of feature names.
+    Returns:
+        matplotlib.figure.Figure: The feature importance plot.
+    """
+    from matplotlib.figure import Figure
+
+    # Get feature importances
+    importances = model.feature_importances_
+    indices = np.argsort(importances)[::-1]  # Sort in descending order
+
+    # Create the plot
+    fig = Figure(figsize=(10, 6))
+    ax = fig.add_subplot(111)
+    ax.bar(range(len(importances)), importances[indices], align="center")
+    ax.set_xticks(range(len(importances)))
+    ax.set_xticklabels([feature_names[i] for i in indices], rotation=90)
+    ax.set_xlabel("Feature")
+    ax.set_ylabel("Importance")
+    ax.set_title("Feature Importance")
+
+    # Adjust layout
+    fig.tight_layout()
+
+    return fig
+
+
+def plot_precision_recall_curve(model: object, X_test: object, y_test: object) -> object:
+    """
+    Function to create a precision-recall curve.
+    :param model
+    :param X_test
+    :param y_test
+    :return fig
+    """
+
+    from matplotlib.figure import Figure
+    from sklearn.metrics import precision_recall_curve, average_precision_score
+
+    # Get predicted probabilities
+    y_scores = model.predict_proba(X_test)
+
+    # Compute precision-recall curve for each class
+    classes = np.unique(y_test)
+    y_test_bin = label_binarize(y_test, classes=classes)
+
+    fig = Figure(figsize=(10, 6))
+    ax = fig.add_subplot(111)
+
+    for i in range(y_test_bin.shape[1]):
+        precision, recall, _ = precision_recall_curve(y_test_bin[:, i], y_scores[:, i])
+        avg_precision = average_precision_score(y_test_bin[:, i], y_scores[:, i])
+        ax.plot(recall, precision, label=f'Class {classes[i]} (AP = {avg_precision:.2f})')
+
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Precision-Recall Curve")
+    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')  # Move legend outside
+    fig.tight_layout()
+
+    return fig
+
+def plot_prediction_distribution(y_test: object, y_pred: object, label_mappings: object) -> object:
+    """
+    Function to create a distribution plot of predicted classes.
+    :param y_test
+    :param y_pred
+    :param label_mappings
+    :return fig
+    """
+    from matplotlib.figure import Figure
+    import seaborn as sns
+
+    # Decode numeric labels back to original class labels
+    y_test_decoded = decode_predictions(pd.Series(y_test), label_mappings, 'class')
+    y_pred_decoded = decode_predictions(pd.Series(y_pred), label_mappings, 'class')
+
+    # Create a DataFrame for visualization
+    df = pd.DataFrame({'True Class': y_test_decoded, 'Predicted Class': y_pred_decoded})
+
+    # Create the plot
+    fig = Figure(figsize=(10, 6))
+    ax = fig.add_subplot(111)
+    sns.countplot(data=df, x='Predicted Class', hue='True Class', ax=ax)
+    ax.set_xlabel("Predicted Class")
+    ax.set_ylabel("Count")
+    ax.set_title("Distribution of Predictions")
+    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')  # Move legend outside
+    fig.tight_layout()
 
     return fig
 
