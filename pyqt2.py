@@ -135,6 +135,14 @@ class MainWindow(QMainWindow):
         self.process_button.setStyleSheet("border: 2px solid #FF9800; border-radius: 10px; background-color: #FFF3E0;")
         operations_layout.addWidget(self.process_button)
 
+        # Add a Reset Button
+        self.reset_button = QPushButton("Reset")
+        self.reset_button.clicked.connect(self.reset_application_state)
+        self.reset_button.setFixedSize(150, 50)
+        self.reset_button.setFont(QFont("Arial", 12))
+        self.reset_button.setStyleSheet("border: 2px solid #FF0000; border-radius: 10px; background-color: #FFCCCB;")
+        operations_layout.addWidget(self.reset_button)
+
         main_layout.addLayout(operations_layout)
 
         # File Path Display
@@ -213,6 +221,31 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_widget)
         self.set_light_theme()
 
+    def reset_application_state(self):
+        """
+        Resets the application state by re-importing the dataset and clearing logs and charts.
+        """
+        # Clear logs
+        self.log_text_edit.clear()
+
+        # Clear charts from the Results tab
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        # Re-import the dataset
+        if hasattr(self, 'file_path'):
+            global df
+            df = self.load_data(self.file_path)
+            self.df = df.copy()
+            self.display_data()
+            self.log_message("Dataset re-imported successfully.")
+        else:
+            self.log_message("No dataset loaded. Please import a dataset first.")
+
+        self.log_message("Application state reset successfully.")
+
     def log_message(self, message):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.log_text_edit.append(f"[{timestamp}] {message}")
@@ -227,37 +260,26 @@ class MainWindow(QMainWindow):
         color_code = getattr(Fore, color.upper(), Fore.WHITE)  # Default to WHITE if color is invalid
         print(color_code + f"[{timestamp}]\n{message}" + Style.RESET_ALL)
 
-    def reset_application_state(self):
-        """
-        Resets the application state before training a new model.
-        """
-        # Clear logs
-        self.log_text_edit.clear()
-
-        # Clear charts from the Results tab
-        for i in reversed(range(self.scroll_layout.count())):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget:
-                widget.deleteLater()
-
-        # Reset the dataset to its original state (if needed)
-        global df
-        if not df.empty:
-            self.df = df.copy()
-            self.display_data()
-
-        self.log_message("Application state reset successfully.")
-
     # Functions that regard the functionality of the model
 
     def import_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Open CSV File", "", "CSV Files (*.csv)")
         if file_path:
             global df
+            self.file_path = file_path  # Store the file path for re-importing
             df = self.load_data(file_path)
             self.df = df.copy()
             self.file_path_label.setText(f"Loaded: {file_path}")
             self.display_data()
+
+    # def import_file(self):
+    #     file_path, _ = QFileDialog.getOpenFileName(self, "Open CSV File", "", "CSV Files (*.csv)")
+    #     if file_path:
+    #         global df
+    #         df = self.load_data(file_path)
+    #         self.df = df.copy()
+    #         self.file_path_label.setText(f"Loaded: {file_path}")
+    #         self.display_data()
 
     def load_data(self, file_path):
         self.log_message("Loading dataset...")
