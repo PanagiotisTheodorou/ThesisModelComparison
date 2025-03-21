@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QTabWidget,
     QHBoxLayout, QFileDialog, QMenuBar, QMenu, QTableWidget, QTableWidgetItem, QSpinBox,
-    QTextEdit, QProgressDialog, QDialog, QScrollArea, QFrame, QSizePolicy
+    QTextEdit, QProgressDialog, QDialog, QScrollArea, QFrame, QSizePolicy, QComboBox
 )
 from PyQt6.QtGui import QFont, QAction, QMovie
 from PyQt6.QtCore import Qt
@@ -11,7 +11,7 @@ from matplotlib.figure import Figure
 from datetime import datetime
 import pandas as pd
 from colorama import Fore, Style
-
+from sympy.printing.cxx import reserved
 
 # Global dataframe
 df = pd.DataFrame()
@@ -79,6 +79,13 @@ class MainWindow(QMainWindow):
         # Copy of global df
         self.df: pd.DataFrame = df.copy()
 
+        # Model options
+        self.model_options = {
+            "Random Forest": train_model,  # From train_RFQ
+            "Support Vector Machine (SVM)": train_SVM,  # From train_SVM
+            "Linear Regression": train_LF  # From train_LF (example)
+        }
+
         self.initUI()
 
     def initUI(self):
@@ -134,6 +141,15 @@ class MainWindow(QMainWindow):
         self.file_path_label = QLabel("No file loaded.")
         self.file_path_label.setStyleSheet("font-style: italic;")
         main_layout.addWidget(self.file_path_label)
+
+        # Model Selection Dropdown
+        model_selection_layout = QHBoxLayout()
+        model_label = QLabel("Select Model:")
+        self.model_dropdown = QComboBox()
+        self.model_dropdown.addItems(self.model_options.keys())  # Add model options
+        model_selection_layout.addWidget(model_label)
+        model_selection_layout.addWidget(self.model_dropdown)
+        main_layout.addLayout(model_selection_layout)
 
         # Tab Widget for Data, Logs, Results, and Charts
         self.tabs = QTabWidget()
@@ -211,6 +227,27 @@ class MainWindow(QMainWindow):
         color_code = getattr(Fore, color.upper(), Fore.WHITE)  # Default to WHITE if color is invalid
         print(color_code + f"[{timestamp}]\n{message}" + Style.RESET_ALL)
 
+    def reset_application_state(self):
+        """
+        Resets the application state before training a new model.
+        """
+        # Clear logs
+        self.log_text_edit.clear()
+
+        # Clear charts from the Results tab
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        # Reset the dataset to its original state (if needed)
+        global df
+        if not df.empty:
+            self.df = df.copy()
+            self.display_data()
+
+        self.log_message("Application state reset successfully.")
+
     # Functions that regard the functionality of the model
 
     def import_file(self):
@@ -284,6 +321,8 @@ class MainWindow(QMainWindow):
 
 
     def perform_processing(self):
+        # Reset the application state before training a new model
+        self.reset_application_state()
 
         self.log_message("Initializing data processing...")
 
@@ -321,13 +360,22 @@ class MainWindow(QMainWindow):
             self.df, self.label_encoders, self.label_mappings = encode_categorical(df)
             self.log_message("Categorical columns encoded.")
 
+            # Get the selected model from the dropdown
+            selected_model_name = self.model_dropdown.currentText()
+            selected_model_func = self.model_options[selected_model_name]
+
+            self.log_message(f"Training {selected_model_name} model")
+            model, X_train, X_test, y_train, y_test, acr, best_params, cr = selected_model_func(
+                df, target_column, self.label_mappings
+            )
+
             self.log_message("Starting model training")
             self.log_message("Filtering rare classes")
             self.log_message("Applying dataset balancing")
             self.log_message("Dataset balanced.")
             self.log_message("Performing stratified train-test split")
             self.log_message("Hyperparameter tuning using GridSearchCV")
-            model, X_train, X_test, y_train, y_test, acr, best_params, cr = train_model(df, target_column, self.label_mappings)
+            #model, X_train, X_test, y_train, y_test, acr, best_params, cr = train_model(df, target_column, self.label_mappings)
             #model, X_train, X_test, y_train, y_test, acr, best_params, cr = train_LF(df, target_column, self.label_mappings)
             #model, X_train, X_test, y_train, y_test, acr, best_params, cr = train_SVM(df, target_column, self.label_mappings)
 
