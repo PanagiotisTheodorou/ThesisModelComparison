@@ -194,7 +194,7 @@ def train_model_svm(df, target_column, label_mappings, label_encoders):
     }
 
     # Save to a file
-    joblib.dump(model_data, '../trained_svm_model.pkl')
+    joblib.dump(model_data, '../streamlit/trained_svm_model.pkl')
     print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_svm_model.pkl'." + Style.RESET_ALL)
 
     return best_model, X_train_scaled, X_test_scaled, y_train, y_test

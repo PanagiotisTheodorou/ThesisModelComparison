@@ -11,7 +11,6 @@ from matplotlib.figure import Figure
 from datetime import datetime
 import pandas as pd
 from colorama import Fore, Style
-from sympy.printing.cxx import reserved
 
 # Global dataframe
 df = pd.DataFrame()
@@ -19,21 +18,20 @@ df = pd.DataFrame()
 from pyqt_charts import plot_prediction_distribution, plot_precision_recall_curve, plot_feature_importance, construct_confusion_matrix_visual, plot_roc_auc
 
 # Import utility functions
-from general_utils import (
-    decode_predictions,
+from __general_utils__ import (
     remove_unwanted_columns,
     remove_outliers,
     fill_missing_values,
     encode_categorical
 )
 
-from train_RFQ import train_model
+from models.train_RFQ import train_model
 
-from train_SVM import train_SVM
+from models.train_SVM import train_SVM
 
-from postprocessing_utils import construct_confussion_matrix_logical, check_overfitting
+from __postprocessing_utils__ import construct_confussion_matrix_logical, check_overfitting
 
-from train_LF import train_LF
+from models.train_LF import train_LF
 
 class MatplotlibCanvas(FigureCanvas):
     def __init__(self, parent=None):

@@ -1,19 +1,6 @@
 import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_recall_curve, f1_score, \
-    roc_auc_score
-import matplotlib.pyplot as plt
-import seaborn as sns
-import time
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
-from imblearn.over_sampling import SMOTE
-from sklearn.metrics import roc_curve, auc
-from sklearn.preprocessing import label_binarize
-from colorama import colorama_text, Fore, Style, init
-from win32trace import flush
-import joblib
+from sklearn.preprocessing import LabelEncoder
+from colorama import Fore, Style
 
 def load_data(file_path):
     """

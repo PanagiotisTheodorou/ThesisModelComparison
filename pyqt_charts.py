@@ -7,7 +7,7 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from matplotlib.figure import Figure
 
-from general_utils import decode_predictions
+from __general_utils__ import decode_predictions
 
 
 def plot_roc_auc(model: object, X_test: object, y_test: object) -> object:

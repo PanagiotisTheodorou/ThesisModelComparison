@@ -192,7 +192,7 @@ def train_model_decision_tree(df, target_column, label_mappings, label_encoders)
     }
 
     # Save to a file
-    joblib.dump(model_data, '../trained_decision_tree_model.pkl')
+    joblib.dump(model_data, '../streamlit/trained_decision_tree_model.pkl')
     print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_decision_tree_model.pkl'." + Style.RESET_ALL)
 
     return best_model, X_train, X_test, y_train, y_test

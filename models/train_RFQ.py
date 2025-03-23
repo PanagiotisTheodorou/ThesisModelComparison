@@ -4,9 +4,9 @@ from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
 from colorama import Fore, Style
 
-from general_utils import decode_predictions
+from __general_utils__ import decode_predictions
 
-from preprocessing_utils import balance_dataset, feature_selection
+from __preprocessing_utils__ import balance_dataset, feature_selection
 
 # def train_model(df, target_column, label_mappings):
 #     """

@@ -1,18 +1,18 @@
-from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
 import pandas as pd
 from colorama import Fore, Style
-from general_utils import decode_predictions
-from preprocessing_utils import balance_dataset
+from __general_utils__ import decode_predictions
+from __preprocessing_utils__ import balance_dataset
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 
-def train_SVM(df, target_column, label_mappings):
+def train_LF(df, target_column, label_mappings):
     """
-    Function to train an SVM model with error handling and debugging.
+    Function to train a Logistic Regression model with error handling and debugging.
     """
-    print(Fore.GREEN + "\nTraining SVM model..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nTraining Logistic Regression model..." + Style.RESET_ALL)
 
     try:
         # Step 1: Filter rare classes
@@ -45,9 +45,9 @@ def train_SVM(df, target_column, label_mappings):
         X_test = scaler.transform(X_test)
         print("Features scaled successfully.")
 
-        # Step 6: Train the SVM model
-        print("Step 6: Training the SVM model...")
-        model = SVC(class_weight="balanced", random_state=42, probability=True)
+        # Step 6: Train the Logistic Regression model
+        print("Step 6: Training the Logistic Regression model...")
+        model = LogisticRegression(class_weight="balanced", random_state=42, max_iter=5000)
         model.fit(X_train, y_train)
         print("Model training completed.")
 
@@ -82,7 +82,7 @@ def train_SVM(df, target_column, label_mappings):
         return model, X_train, X_test, y_train, y_test, accuracy_scr, {}, cr_dict
 
     except Exception as e:
-        print(Fore.RED + f"\nError during SVM model training: {str(e)}" + Style.RESET_ALL)
+        print(Fore.RED + f"\nError during model training: {str(e)}" + Style.RESET_ALL)
         print(Fore.RED + "Traceback:" + Style.RESET_ALL)
         import traceback
         traceback.print_exc()

@@ -175,7 +175,7 @@ def train_model_linear_regression(df, target_column, label_mappings, label_encod
     }
 
     # Save to a file
-    joblib.dump(model_data, '../trained_linear_regression_model.pkl')
+    joblib.dump(model_data, '../streamlit/trained_linear_regression_model.pkl')
     print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_linear_regression_model.pkl'." + Style.RESET_ALL)
 
     return lr, X_train_scaled, X_test_scaled, y_train, y_test
