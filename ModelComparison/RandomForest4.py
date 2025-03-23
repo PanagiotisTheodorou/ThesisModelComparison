@@ -187,7 +187,7 @@ def train_model(df, target_column, label_mappings, label_encoders):
     }
 
     # Save to a file
-    joblib.dump(model_data, '../trained_model.pkl')
+    joblib.dump(model_data, '../random_forest.pkl')
     print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_model.pkl'." + Style.RESET_ALL)
 
     return best_model, x_train, x_test, y_train, y_test
