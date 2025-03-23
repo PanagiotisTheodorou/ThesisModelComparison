@@ -211,10 +211,16 @@ class MainWindow(QMainWindow):
         self.scroll_area.setWidget(self.scroll_content)  # Set the scrollable content
         self.results_layout.addWidget(self.scroll_area)  # Add the scroll area to the results tab
 
+        # Inference Tab
+        self.inference_tab = QWidget()
+        self.inference_layout = QVBoxLayout()  # Initialize the layout
+        self.inference_tab.setLayout(self.inference_layout)
+
         # allocate tabs
         self.tabs.addTab(self.data_tab, "Data")
         self.tabs.addTab(self.logs_tab, "Logs")
         self.tabs.addTab(self.results_tab, "Results")
+        self.tabs.addTab(self.inference_tab, "Inference")
 
         main_layout.addWidget(self.tabs)
         main_widget.setLayout(main_layout)

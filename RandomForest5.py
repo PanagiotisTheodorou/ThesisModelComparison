@@ -2,7 +2,7 @@
 """
 The following code trains a Random Forest Model by applying the strategy mentioned in the report
 """
-
+import joblib
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -196,7 +196,7 @@ def feature_selection(X_train, y_train, X_test, threshold=0.01):
     return X_train_selected, X_test_selected, feature_importance_df
 
 
-def train_model(df, target_column, label_mappings):
+def train_model(df, target_column, label_mappings, label_encoders):
     """
             Function to train the model, Steps:
             1. Filter rare classes, and for those apply the balancing logic
@@ -261,6 +261,18 @@ def train_model(df, target_column, label_mappings):
     # Print classification report with decoded labels
     print(Fore.LIGHTGREEN_EX + "Classification Report:\n" + Style.RESET_ALL)
     print(classification_report(y_test_decoded, predictions_decoded))
+
+    # Save the trained model and preprocessing objects
+    model_data = {
+        'model': best_model,
+        'label_encoders': label_encoders,
+        'label_mappings': label_mappings,
+        'scaler': None  # Add scaler if used during training
+    }
+
+    # Save to a file
+    joblib.dump(model_data, 'RandomForestModel.pkl')
+    print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_model.pkl'." + Style.RESET_ALL)
 
     return best_model, X_train, X_test, y_train, y_test
 
@@ -458,7 +470,7 @@ def main():
     print(Fore.GREEN + "Cleaned dataset saved!\n" + Style.RESET_ALL)
 
     print("Starting model training")
-    model, X_train, X_test, y_train, y_test = train_model(df, target_column, label_mappings)
+    model, X_train, X_test, y_train, y_test = train_model(df, target_column, label_mappings, label_encoders)
 
     # Check for overfitting
     check_overfitting(model, X_train, y_train, X_test, y_test)
