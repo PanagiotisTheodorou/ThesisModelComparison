@@ -2,112 +2,28 @@
 """
 The following code trains a Random Forest Model by applying the strategy mentioned in the report
 """
-import joblib
+
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, precision_recall_curve, f1_score, \
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, \
     roc_auc_score
 import matplotlib.pyplot as plt
-import seaborn as sns
 import time
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
-from colorama import colorama_text, Fore, Style, init
-from win32trace import flush
+from colorama import Fore, Style, init
+import joblib
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 #Initialize colorama
 init(autoreset=True)
 
-
-def load_data(file_path):
-    """
-        Function to load the data from the csv that is provided in the main def
-    """
-    print(Fore.GREEN + "\nLoading dataset..." + Style.RESET_ALL)
-
-    df = pd.read_csv(file_path, na_values='?')  # Replace '?' with NaN
-
-    print(Fore.LIGHTGREEN_EX + "Dataset loaded successfully!\n" + Style.RESET_ALL)
-    print(df.head())
-    return df
-
-
-def remove_unwanted_columns(df):
-    """
-        Function to remove all the mutualle exclusive columns (Dimentionality Reduction)
-        Because if not removed when filling the missing data, it will lead to an unbalanced dataset
-    """
-    print(Fore.GREEN + "\nRemoving unwanted columns..." + Style.RESET_ALL)
-
-    columns_to_drop = [col for col in df.columns if 'measured' in col.lower()] # Remove all columns that have to do with measured -> Mutually Exclusives
-    df.drop(columns=columns_to_drop, inplace=True)
-
-    print(Fore.LIGHTGREEN_EX + f"Dropped columns: {columns_to_drop}\n" + Style.RESET_ALL)
-    return df
-
-
-def remove_outliers(df):
-    """
-        Function to remove the outliers all numeric columns, namely there are some values in age that reach the 65,000 mark
-    """
-
-    print(Fore.GREEN + "\nRemoving outliers..." + Style.RESET_ALL)
-
-    numerical_columns = ["age", "TSH", "T3", "TT4", "T4U", "FTI", "TBG"]
-    Q1 = df[numerical_columns].quantile(0.25)
-    Q3 = df[numerical_columns].quantile(0.75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    df_no_outliers = df[~((df[numerical_columns] < lower_bound) | (df[numerical_columns] > upper_bound)).any(axis=1)]
-
-    print(Fore.LIGHTGREEN_EX + f"Outliers removed: {len(df) - len(df_no_outliers)} rows dropped." + Style.RESET_ALL)
-    return df_no_outliers
-
-
-def fill_missing_values(df):
-    """
-        Function to fill all the missing values using the mean of set columnn (numeric)
-    """
-
-    print(Fore.GREEN + "\nFilling missing values..." + Style.RESET_ALL)
-
-    for col in df.columns:
-        if df[col].dtype == 'object':
-            df[col] = df[col].fillna(df[col].mode()[0])
-        else:
-            df[col] = df[col].fillna(df[col].mean())
-
-    print(Fore.LIGHTGREEN_EX + "Missing values filled.\n" + Style.RESET_ALL)
-
-    return df
-
-
-def encode_categorical(df):
-    """
-    Function to encode categorical data using label encoding.
-    This is done so that the model can understand the categories.
-    It also stores the mapping for decoding labels later.
-    """
-
-    print(Fore.GREEN + "\nEncoding categorical variables..." + Style.RESET_ALL)
-
-    label_encoders = {}
-    label_mappings = {}
-
-    for col in df.select_dtypes(include=['object']).columns:
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col])
-        label_encoders[col] = le
-        label_mappings[col] = dict(enumerate(le.classes_))  # Store mapping
-
-    print(Fore.LIGHTGREEN_EX + "Categorical columns encoded.\n" + Style.RESET_ALL)
-
-    return df, label_encoders, label_mappings
+from utils import load_data, remove_outliers, remove_unwanted_columns, fill_missing_values, encode_categorical
 
 
 def balance_dataset(df, target_column):
@@ -135,11 +51,11 @@ def balance_dataset(df, target_column):
             sampling_strategy[cls] = target_counts
 
     # Apply SMOTE for oversampling
-    X = df.drop(columns=[target_column])
+    x = df.drop(columns=[target_column])
     y = df[target_column]
     smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
-    X_resampled, y_resampled = smote.fit_resample(X, y)
-    resampled_df = pd.DataFrame(X_resampled, columns=X.columns)
+    x_resampled, y_resampled = smote.fit_resample(x, y)
+    resampled_df = pd.DataFrame(x_resampled, columns=x.columns)
     resampled_df[target_column] = y_resampled
 
     # Apply equal sampling of majority class instances
@@ -158,7 +74,7 @@ def balance_dataset(df, target_column):
     return balanced_df
 
 
-def feature_selection(X_train, y_train, X_test, threshold=0.01):
+def feature_selection(x_train, y_train, x_test, threshold=0.01):
     """
     Perform feature selection using Random Forest feature importance.
     Features with importance greater than the threshold are selected.
@@ -167,11 +83,11 @@ def feature_selection(X_train, y_train, X_test, threshold=0.01):
 
     # Train a Random Forest model to get feature importance
     rf = RandomForestClassifier(random_state=42)
-    rf.fit(X_train, y_train)
+    rf.fit(x_train, y_train)
 
-    # Get feature importances
+    # Get feature importance
     importances = rf.feature_importances_
-    feature_names = X_train.columns
+    feature_names = x_train.columns
 
     # Create a DataFrame to display feature importances
     feature_importance_df = pd.DataFrame({
@@ -180,7 +96,7 @@ def feature_selection(X_train, y_train, X_test, threshold=0.01):
     }).sort_values(by="Importance", ascending=False)
 
     # Display feature importances
-    print(Fore.CYAN + "\nFeature Importances:" + Style.RESET_ALL)
+    print(Fore.CYAN + "\nFeature importances:" + Style.RESET_ALL)
     print(feature_importance_df)
 
     # Select features with importance greater than the threshold
@@ -190,21 +106,21 @@ def feature_selection(X_train, y_train, X_test, threshold=0.01):
     print(selected_features)
 
     # Filter the datasets to include only selected features
-    X_train_selected = X_train[selected_features]
-    X_test_selected = X_test[selected_features]
+    x_train_selected = x_train[selected_features]
+    x_test_selected = x_test[selected_features]
 
-    return X_train_selected, X_test_selected, feature_importance_df
+    return x_train_selected, x_test_selected, feature_importance_df
 
 
 def train_model(df, target_column, label_mappings, label_encoders):
     """
             Function to train the model, Steps:
             1. Filter rare classes, and for those apply the balancing logic
-            2. split between dependent and non dependent column
+            2. split between dependent and non-dependent column
             3. Split the dataset to test and train
             4. Create a parameter grid for hyperparameter tuning
             5. Create and Train the model
-            6. Apply Grid search so that the interpreter will loop throygh the available parameters and find the best ones
+            6. Apply Grid search so that the interpreter will loop through the available parameters and find the best ones
             7. Print out the best model, and the statistics, then return the chosen model
         """
 
@@ -220,16 +136,16 @@ def train_model(df, target_column, label_mappings, label_encoders):
 
     df = balance_dataset(df, target_column)
 
-    X = df.drop(columns=[target_column])
+    x = df.drop(columns=[target_column])
     y = df[target_column]
 
     print(Fore.LIGHTGREEN_EX + "Performing stratified train-test split..." + Style.RESET_ALL)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42, stratify=y)
 
     # Perform feature selection
     # TODO: I can uncomment and comment this in order to add feature selection
-    #X_train, X_test, feature_importance_df = feature_selection(X_train, y_train, X_test, threshold=0.01)
+    #x_train, x_test, feature_importance_df = feature_selection(x_train, y_train, x_test, threshold=0.01)
 
     print(Fore.LIGHTGREEN_EX + "Hyperparameter tuning using GridSearchCV..." + Style.RESET_ALL)
 
@@ -243,13 +159,13 @@ def train_model(df, target_column, label_mappings, label_encoders):
 
     rf = RandomForestClassifier(class_weight="balanced", random_state=42)
     grid_search = GridSearchCV(rf, param_grid, cv=5, scoring="accuracy", n_jobs=-1)
-    grid_search.fit(X_train, y_train)
+    grid_search.fit(x_train, y_train)
 
     print(Fore.LIGHTGREEN_EX + f"Best Parameters: {grid_search.best_params_}" + Style.RESET_ALL)
 
     best_model = grid_search.best_estimator_
 
-    predictions = best_model.predict(X_test)
+    predictions = best_model.predict(x_test)
 
     print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy_score(y_test, predictions):.4f}" + Style.RESET_ALL)
     #print("Classification Report:\n", classification_report(y_test, predictions))
@@ -271,10 +187,10 @@ def train_model(df, target_column, label_mappings, label_encoders):
     }
 
     # Save to a file
-    joblib.dump(model_data, 'RandomForestModel.pkl')
+    joblib.dump(model_data, '../trained_model.pkl')
     print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_model.pkl'." + Style.RESET_ALL)
 
-    return best_model, X_train, X_test, y_train, y_test
+    return best_model, x_train, x_test, y_train, y_test
 
 
 def decode_predictions(predictions, label_mappings, column_name):
@@ -284,7 +200,7 @@ def decode_predictions(predictions, label_mappings, column_name):
     return predictions.map(label_mappings[column_name])
 
 
-def check_overfitting(model, X_train, y_train, X_test, y_test):
+def check_overfitting(model, x_train, y_train, x_test, y_test):
     """
     Function to check for overfitting by comparing training and test accuracy.
     Also performs cross-validation to verify model generalization.
@@ -292,8 +208,8 @@ def check_overfitting(model, X_train, y_train, X_test, y_test):
     print(Fore.GREEN + "\nChecking for Overfitting..." + Style.RESET_ALL)
 
     # Predict on training and test sets
-    y_train_pred = model.predict(X_train)
-    y_test_pred = model.predict(X_test)
+    y_train_pred = model.predict(x_train)
+    y_test_pred = model.predict(x_test)
 
     # Compute accuracies
     train_acc = accuracy_score(y_train, y_train_pred)
@@ -303,7 +219,7 @@ def check_overfitting(model, X_train, y_train, X_test, y_test):
     print(Fore.LIGHTGREEN_EX + f"Test Accuracy: {test_acc:.4f}" + Style.RESET_ALL)
 
     # Perform cross-validation
-    cv_scores = cross_val_score(model, X_train, y_train, cv=10, scoring="accuracy")
+    cv_scores = cross_val_score(model, x_train, y_train, cv=5, scoring="accuracy")
     print(Fore.LIGHTGREEN_EX + f"Cross-Validation Accuracy: {cv_scores.mean():.4f} +/- {cv_scores.std():.4f}" + Style.RESET_ALL)
 
     # Check for overfitting
@@ -313,25 +229,21 @@ def check_overfitting(model, X_train, y_train, X_test, y_test):
         print(Fore.LIGHTGREEN_EX + "No significant overfitting detected." + Style.RESET_ALL)
 
 
-def plot_roc_auc(model, X_test, y_test):
+def plot_roc_auc(model, x_test, y_test):
     """
-    Function to create a plot for the AUC and ROC curves.
-    It takes the labels (classes), gets the probability metrics,
-    and calculates the AUC ROC curve for all.
+        Function to create a plot for the AUC and ROC curves,
+        It takes the labels (classes), and gets the probability metrics
+        Then it calculates the AUC ROC curve for all
     """
-    classes = np.unique(y_test)  # Dynamically get unique classes
-    y_test_bin = label_binarize(y_test, classes=classes)
-    y_scores = model.predict_proba(X_test)  # Get probability scores
+    y_test_bin = label_binarize(y_test, classes=[0, 1, 2, 3, 7, 8, 9, 11, 13, 17, 18])
+    y_scores = model.predict_proba(x_test)  # Get probability scores
 
     plt.figure(figsize=(10, 6))
 
     for i in range(y_test_bin.shape[1]):
-        if np.sum(y_test_bin[:, i]) == 0:  # Skip classes with no positive samples
-            print(f"Skipping class {classes[i]} (no positive samples)")
-            continue
         fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_scores[:, i])
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, label=f'Class {classes[i]} (AUC = {roc_auc:.2f})')
+        plt.plot(fpr, tpr, label=f'Class {i} (AUC = {roc_auc:.2f})')
 
     plt.plot([0, 1], [0, 1], 'k--')  # Diagonal line
     plt.xlabel("False Positive Rate")
@@ -340,16 +252,33 @@ def plot_roc_auc(model, X_test, y_test):
     plt.legend()
     plt.show()
 
+def print_roc_auc(model, x_test, y_test, label_mappings, target_column):
+    """
+    Function to calculate and print AUC-ROC values for each class in the terminal.
+    Uses class names instead of numeric labels.
+    """
+    # Binarize the labels for multi-class ROC-AUC calculation
+    classes = np.unique(y_test)
+    y_test_bin = label_binarize(y_test, classes=classes)
+    y_scores = model.predict_proba(x_test)  # Get probability scores
+
+    print(Fore.GREEN + "\nAUC-ROC Values for Each Class:" + Style.RESET_ALL)
+    for i, cls in enumerate(classes):
+        fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_scores[:, i])
+        roc_auc = auc(fpr, tpr)
+        # Decode numeric class to original class name
+        class_name = label_mappings[target_column].get(cls, f"Class {cls}")
+        print(Fore.CYAN + f"{class_name}: AUC = {roc_auc:.4f}" + Style.RESET_ALL)
 
 
-def construct_confussion_matrix(model, X_test, y_test, label_mappings, model_name):
+def construct_confussion_matrix(model, x_test, y_test, label_mappings, model_name):
     """
     Function to print evaluation metrics for the model.
     It prints accuracy, weighted F1 score, confusion matrix,
     classification report, and multi-class ROC AUC score.
     """
     # Predict the results
-    y_pred = model.predict(X_test)
+    y_pred = model.predict(x_test)
 
     # Compute accuracy, confusion matrix, and classification report
     accuracy = accuracy_score(y_test, y_pred)
@@ -363,7 +292,7 @@ def construct_confussion_matrix(model, X_test, y_test, label_mappings, model_nam
     try:
         classes = np.unique(y_test)
         y_test_bin = label_binarize(y_test, classes=classes)
-        y_scores = model.predict_proba(X_test)
+        y_scores = model.predict_proba(x_test)
         roc_auc = roc_auc_score(y_test_bin, y_scores, multi_class='ovr')
     except Exception as e:
         roc_auc = "Not Available"
@@ -384,67 +313,23 @@ def construct_confussion_matrix(model, X_test, y_test, label_mappings, model_nam
 
     print(Fore.LIGHTGREEN_EX + f"Multi-Class ROC AUC (One-vs-Rest): {roc_auc}" + Style.RESET_ALL)
 
-    # Calculate TP, TN, FP, FN for each class
-    print(Fore.LIGHTGREEN_EX + "\nShowing the TP, TN, FP, FN rate for each class:" + Style.RESET_ALL)
+    # Calculate tp, tn, fp, fn for each class
+    print(Fore.LIGHTGREEN_EX + "\nShowing the tp, tn, fp, fn rate for each class:" + Style.RESET_ALL)
     print('-------------------------')
     for i, class_label in enumerate(class_labels):  # Use decoded class labels
-        TP = cm[i, i]  # True Positives for the current class
-        FP = cm[:, i].sum() - TP  # False Positives for the current class
-        FN = cm[i, :].sum() - TP  # False Negatives for the current class
-        TN = cm.sum() - (TP + FP + FN)  # True Negatives for the current class
+        tp = cm[i, i]  # True Positives for the current class
+        fp = cm[:, i].sum() - tp  # False Positives for the current class
+        fn = cm[i, :].sum() - tp  # False Negatives for the current class
+        tn = cm.sum() - (tp + fp + fn)  # True Negatives for the current class
 
         print(Fore.YELLOW + f"Class {class_label}:" + Style.RESET_ALL)
-        print(Fore.GREEN + f"True Positives (TP): {TP}" + Style.RESET_ALL)
-        print(Fore.RED + f"False Positives (FP): {FP}" + Style.RESET_ALL)
-        print(Fore.RED + f"False Negatives (FN): {FN}" + Style.RESET_ALL)
-        print(Fore.GREEN + f"True Negatives (TN): {TN}" + Style.RESET_ALL)
+        print(Fore.GREEN + f"True Positives (tp): {tp}" + Style.RESET_ALL)
+        print(Fore.RED + f"False Positives (fp): {fp}" + Style.RESET_ALL)
+        print(Fore.RED + f"False Negatives (fn): {fn}" + Style.RESET_ALL)
+        print(Fore.GREEN + f"True Negatives (tn): {tn}" + Style.RESET_ALL)
         print('-------------------------')
 
     return accuracy, f1, roc_auc, cm, report
-
-
-def print_class_mapping():
-    """
-    Print the mapping of class labels to their corresponding diagnoses.
-    """
-    print(Fore.CYAN + "\nClass Label Mapping:" + Style.RESET_ALL)
-    print(Fore.YELLOW + "\tLetter\tDiagnosis" + Style.RESET_ALL)
-    print(Fore.YELLOW + "\t------\t---------" + Style.RESET_ALL)
-
-    print(Fore.GREEN + "\nHyperthyroid Conditions:" + Style.RESET_ALL)
-    print("\tA\thyperthyroid")
-    print("\tB\tT3 toxic")
-    print("\tC\ttoxic goitre")
-    print("\tD\tsecondary toxic")
-
-    print(Fore.GREEN + "\nHypothyroid Conditions:" + Style.RESET_ALL)
-    print("\tE\thypothyroid")
-    print("\tF\tprimary hypothyroid")
-    print("\tG\tcompensated hypothyroid")
-    print("\tH\tsecondary hypothyroid")
-
-    print(Fore.GREEN + "\nBinding Protein:" + Style.RESET_ALL)
-    print("\tI\tincreased binding protein")
-    print("\tJ\tdecreased binding protein")
-
-    print(Fore.GREEN + "\nGeneral Health:" + Style.RESET_ALL)
-    print("\tK\tconcurrent non-thyroidal illness")
-
-    print(Fore.GREEN + "\nReplacement Therapy:" + Style.RESET_ALL)
-    print("\tL\tconsistent with replacement therapy")
-    print("\tM\tunderreplaced")
-    print("\tN\toverreplaced")
-
-    print(Fore.GREEN + "\nAntithyroid Treatment:" + Style.RESET_ALL)
-    print("\tO\tantithyroid drugs")
-    print("\tP\tI131 treatment")
-    print("\tQ\tsurgery")
-
-    print(Fore.GREEN + "\nMiscellaneous:" + Style.RESET_ALL)
-    print("\tR\tdiscordant assay results")
-    print("\tS\televated TBG")
-    print("\tT\televated thyroid hormones")
-
 
 
 def main():
@@ -466,26 +351,23 @@ def main():
     for col, mapping in label_mappings.items():
         print(f"{col}: {mapping}")
 
-    df.to_csv("cleaned_dataset2.csv", index=False)
+    df.to_csv("cleaned_dataset.csv", index=False)
     print(Fore.GREEN + "Cleaned dataset saved!\n" + Style.RESET_ALL)
 
     print("Starting model training")
-    model, X_train, X_test, y_train, y_test = train_model(df, target_column, label_mappings, label_encoders)
+    model, x_train, x_test, y_train, y_test = train_model(df, target_column, label_mappings, label_encoders)
 
     # Check for overfitting
-    check_overfitting(model, X_train, y_train, X_test, y_test)
+    check_overfitting(model, x_train, y_train, x_test, y_test)
 
     # Construct and display confusion matrix and additional metrics in the console
-    construct_confussion_matrix(model, X_test, y_test, label_mappings, model_name="Random Forest")
-
-    # Print class label mapping
-    print_class_mapping()
+    construct_confussion_matrix(model, x_test, y_test, label_mappings, model_name="Random Forest")
 
     end_time = time.time()
     print(Fore.GREEN + f"\nScript execution finished! Total time: {end_time - start_time:.2f} seconds\n" + Style.RESET_ALL)
 
     # Plot AUC-ROC curve instead of confusion matrix
-    plot_roc_auc(model, X_test, y_test)
+    print_roc_auc(model, x_test, y_test, label_mappings, target_column)
 
 
 if __name__ == "__main__":
