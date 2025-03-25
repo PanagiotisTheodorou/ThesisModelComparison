@@ -78,7 +78,7 @@ from __preprocessing_utils__ import balance_dataset, feature_selection
 #
 #     return best_model, X_train, X_test, y_train, y_test, accuracy_scr, grid_search.best_params_, cr_dict
 
-def train_model(df, target_column, label_mappings):
+def train_RFC(df, target_column, label_mappings):
     """
     Function to train the model without hyperparameter tuning.
     Steps:
