@@ -2,8 +2,17 @@ import pandas as pd
 import tkinter as tk
 from tkinter import ttk
 
+"""
+    The code performs the following:
+        1. loads the dataset
+        2. Replaces '?' with NaN 
+        3. Extracts column metadata (name, data type)
+        4. Creates a tkinter ui
+        5. Adds the records that depict the columns
+"""
+
 # Load the dataset
-df = pd.read_csv("ThyroxineDataLastDataset.csv")
+df = pd.read_csv("../data/ThyroxineDataLastDataset.csv")
 
 # Replace '?' with NaN to properly identify missing values
 df.replace('?', pd.NA, inplace=True)
