@@ -177,7 +177,7 @@ def train_model_naive_bayes(df, target_column, label_mappings, label_encoders):
     }
 
     # Save to a file
-    joblib.dump(model_data, '../streamlit/trained_naive_bayes_model.pkl')
+    joblib.dump(model_data, '../005_UserUI/trained_naive_bayes_model.pkl')
     print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_naive_bayes_model.pkl'." + Style.RESET_ALL)
 
     return nb, X_train, X_test, y_train, y_test
