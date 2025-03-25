@@ -2,8 +2,19 @@ import pandas as pd
 import tkinter as tk
 from tkinter import scrolledtext
 
+"""
+    The code performs the following:
+        1. Loads the dataset
+        2. Identifies the categorical columns, except diagnosis (previous script showed that it had many unique values)
+        3. Applies One-Hot Encoding through a custom function
+            for binary columns, it defines a single binary columns
+            for multiple category columns, it defines a binary category for each category
+        4. Saves the encoded dataset
+        5. Creates a window to display the mapping
+"""
+
 # Load the dataset
-file_path = "ThyroxineData_Cleaned_NoOutliers.csv"
+file_path = "../data/ThyroxineData_Cleaned_NoOutliers.csv"
 df = pd.read_csv(file_path)
 
 # Identify categorical columns (excluding 'diagnosis')
@@ -35,7 +46,7 @@ def custom_ohe(df, categorical_columns):
 df_encoded, mapping = custom_ohe(df, categorical_columns)
 
 # Save the transformed dataset to a new CSV file
-output_file = "ThyroxineData_Encoded.csv"
+output_file = "../data/ThyroxineData_Encoded.csv"
 df_encoded.to_csv(output_file, index=False)
 
 # Create a GUI window to display the mapping
