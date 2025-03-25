@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load the dataset
-file_path = "../ModelComparison/raw.csv"
+file_path = "../003_ModelComparison/raw.csv"
 raw = pd.read_csv(file_path)
 
 # Convert relevant columns to numeric (adjust the column names as needed)

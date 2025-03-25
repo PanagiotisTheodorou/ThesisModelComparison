@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load the dataset
-file_path = "../ModelComparison/raw.csv"  # Replace with the actual path to your raw dataset
+file_path = "../003_ModelComparison/raw.csv"  # Replace with the actual path to your raw dataset
 raw = pd.read_csv(file_path)
 
 # 1. Count occurrences of each class

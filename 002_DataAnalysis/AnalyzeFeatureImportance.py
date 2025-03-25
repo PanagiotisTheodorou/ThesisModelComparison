@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 # Load the dataset
-file_path = "../ModelComparison/raw.csv"
+file_path = "../003_ModelComparison/raw.csv"
 raw = pd.read_csv(file_path)
 
 # Identify categorical columns that need encoding
