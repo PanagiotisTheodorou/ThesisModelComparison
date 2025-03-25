@@ -29,19 +29,19 @@ from __general_utils__ import (
     encode_categorical
 )
 
-from models.train_RFC import train_RFC
+from ModelsUsedByUI.train_RFC import train_RFC
 
-from models.train_SVM import train_SVM
+from ModelsUsedByUI.train_SVM import train_SVM
 
-from models.train_DT import train_DT
+from ModelsUsedByUI.train_DT import train_DT
 
-from models.train_KNN import train_KNN
+from ModelsUsedByUI.train_KNN import train_KNN
 
-from models.train_NV import train_naive_bayes
+from ModelsUsedByUI.train_NV import train_naive_bayes
+
+from ModelsUsedByUI.train_LR import train_LR
 
 from __postprocessing_utils__ import construct_confussion_matrix_logical, check_overfitting
-
-from models.train_LR import train_LR
 
 class MatplotlibCanvas(FigureCanvas):
     def __init__(self, parent=None):
