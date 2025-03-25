@@ -1,8 +1,18 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
+"""
+    The code performs the following:
+        1. Loads the dataset
+        2. identifies and stores the categorical columns
+        3. Turns categorical data into numerical using One-Hot Encoding
+        4. Stores the new column names after encoding finishes
+        5. Creates a mapping between the label and numerical values of the categories
+        6. Plots a categorical value distribution plot
+"""
+
 # Load the dataset
-file_path = "ThyroxineData_Cleaned_NoOutliers.csv"
+file_path = "../data/ThyroxineData_Cleaned_NoOutliers.csv"
 df = pd.read_csv(file_path)
 
 # Identify categorical columns (non-numeric)
