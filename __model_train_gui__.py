@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # Global dataframe
 df = pd.DataFrame()
 
-from pyqt_charts import plot_prediction_distribution, plot_precision_recall_curve, plot_feature_importance, construct_confusion_matrix_visual, plot_roc_auc
+from __pyqt_charts__ import plot_prediction_distribution, plot_precision_recall_curve, plot_feature_importance, construct_confusion_matrix_visual, plot_roc_auc
 
 # Import utility functions
 from __general_utils__ import (
