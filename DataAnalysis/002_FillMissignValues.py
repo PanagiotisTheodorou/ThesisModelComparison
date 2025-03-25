@@ -1,7 +1,17 @@
 import pandas as pd
 
+"""
+    The code performs the following:
+        1. Loads the dataset
+        2. Replaces '?' with NaN
+        3. Convert numerical columns to numbers (TSH, T3, etc) while coercing invalid values to NaN
+        4. Fills Missing Values (is measured column is not null, and is false then set according column to 0)
+        5. Fills missing categorical values
+        6. saves the new dataset for future use
+"""
+
 # Load the dataset
-df = pd.read_csv('ThyroxineDataLastDataset.csv')
+df = pd.read_csv('../data/ThyroxineDataLastDataset.csv')
 
 # Replace '?' with NaN to properly identify missing values
 df.replace('?', pd.NA, inplace=True)
@@ -32,6 +42,6 @@ for col in df.select_dtypes(include=['object']).columns:
 df[numeric_columns] = df[numeric_columns].apply(lambda x: x.round(2))
 
 # Save the cleaned dataset
-df.to_csv('ThyroxineData_Cleaned_v3.csv', index=False)
+df.to_csv('../data/ThyroxineData_Cleaned_v2.csv', index=False)
 
 print("Missing values handled and dataset saved as 'ThyroxineData_Cleaned_v2.csv'")
