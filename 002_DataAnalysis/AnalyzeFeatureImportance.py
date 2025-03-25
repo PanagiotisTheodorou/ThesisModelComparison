@@ -19,11 +19,11 @@ label_encoder = LabelEncoder()
 for col in categorical_columns:
     raw[col] = label_encoder.fit_transform(raw[col])
 
-# Prepare the data (X = features, y = target class)
+# Prepare the 000_Data (X = features, y = target class)
 X = raw.drop(columns=['class'])
 y = raw['class']
 
-# Split the data into training and testing sets
+# Split the 000_Data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Train a RandomForestClassifier

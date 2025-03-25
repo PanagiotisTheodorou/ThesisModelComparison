@@ -54,7 +54,7 @@ if user_input == 'yes':
     raw['class'] = raw['class'].str.lower()
 
     # Save the new dataset with the generalized classes
-    output_file = "../data/raw_with_general_classes.csv"
+    output_file = "../000_Data/raw_with_general_classes.csv"
     raw.to_csv(output_file, index=False)
 
     print(f"\nNew dataset saved as {output_file}")

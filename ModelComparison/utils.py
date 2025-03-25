@@ -4,7 +4,7 @@ from colorama import Fore, Style
 
 def load_data(file_path):
     """
-        Function to load the data from the csv that is provided in the main def
+        Function to load the 000_Data from the csv that is provided in the main def
     """
     print(Fore.GREEN + "\nLoading dataset..." + Style.RESET_ALL)
 
@@ -17,7 +17,7 @@ def load_data(file_path):
 def remove_unwanted_columns(df):
     """
         Function to remove all the mutualle exclusive columns (Dimentionality Reduction)
-        Because if not removed when filling the missing data, it will lead to an unbalanced dataset
+        Because if not removed when filling the missing 000_Data, it will lead to an unbalanced dataset
     """
     print(Fore.GREEN + "\nRemoving unwanted columns..." + Style.RESET_ALL)
 
@@ -64,7 +64,7 @@ def fill_missing_values(df):
 
 def encode_categorical(df):
     """
-    Function to encode categorical data using label encoding.
+    Function to encode categorical 000_Data using label encoding.
     This is done so that the model can understand the categories.
     It also stores the mapping for decoding labels later.
     """

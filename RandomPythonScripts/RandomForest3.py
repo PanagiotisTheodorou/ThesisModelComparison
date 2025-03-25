@@ -19,7 +19,7 @@ from sklearn.preprocessing import label_binarize
 
 def load_data(file_path):
     """
-        Function to load the data from the csv that is provided in the main def
+        Function to load the 000_Data from the csv that is provided in the main def
     """
     df = pd.read_csv(file_path, na_values='?')  # Replace '?' with NaN
     print("Dataset loaded successfully!\n")
@@ -30,7 +30,7 @@ def load_data(file_path):
 def remove_unwanted_columns(df):
     """
         Function to remove all the mutualle exclusive columns (Dimentionality Reduction)
-        Because if not removed when filling the missing data, it will lead to an unbalanced dataset
+        Because if not removed when filling the missing 000_Data, it will lead to an unbalanced dataset
     """
     columns_to_drop = [col for col in df.columns if 'measured' in col.lower()] # Remove all columns that have to do with measured -> Mutually Exclusives
     df.drop(columns=columns_to_drop, inplace=True)
@@ -68,7 +68,7 @@ def fill_missing_values(df):
 
 def encode_categorical(df):
     """
-        Function to encode the categorical data using label encoding
+        Function to encode the categorical 000_Data using label encoding
         This is done so that the model can understand the categories
     """
     label_encoders = {}

@@ -103,7 +103,7 @@ class MainWindow(QMainWindow):
         data_layout = QVBoxLayout()
         self.data_tab.setLayout(data_layout)
 
-        # Add a QTableWidget to display the data
+        # Add a QTableWidget to display the 000_Data
         self.data_table = QTableWidget()
         self.data_table.setColumnCount(0)
         self.data_table.setRowCount(0)
@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
 
     def load_data(self, file_path):
         """
-        Function to load the data from the CSV file.
+        Function to load the 000_Data from the CSV file.
         """
         try:
             df = pd.read_csv(file_path, na_values='?')  # Replace '?' with NaN
@@ -260,7 +260,7 @@ class MainWindow(QMainWindow):
 
     def encode_categorical(self, df):
         """
-        Function to encode categorical data using label encoding.
+        Function to encode categorical 000_Data using label encoding.
         This is done so that the model can understand the categories.
         It also stores the mapping for decoding labels later.
         """
@@ -286,7 +286,7 @@ class MainWindow(QMainWindow):
 
     # TODO: Implement fill missing values
 
-    # TODO: Implement encode categorical data
+    # TODO: Implement encode categorical 000_Data
 
     # TODO: Implement dataset balancing
 
@@ -314,7 +314,7 @@ class MainWindow(QMainWindow):
 
     def update_table(self):
         """
-        Update the table widget with the loaded data.
+        Update the table widget with the loaded 000_Data.
         """
         if hasattr(self, 'df') and self.df is not None:
             num_rows = self.row_spinbox.value()

@@ -6,18 +6,18 @@ from tkinter import ttk
     The code performs the following:
         1. loads the dataset
         2. Replaces '?' with NaN 
-        3. Extracts column metadata (name, data type)
+        3. Extracts column metadata (name, 000_Data type)
         4. Creates a tkinter ui
         5. Adds the records that depict the columns
 """
 
 # Load the dataset
-df = pd.read_csv("../data/001_dataset_before_preprocessing.csv")
+df = pd.read_csv("../000_Data/001_dataset_before_preprocessing.csv")
 
 # Replace '?' with NaN to properly identify missing values
 df.replace('?', pd.NA, inplace=True)
 
-# Get column names, data types, missing value status, and count
+# Get column names, 000_Data types, missing value status, and count
 column_info = pd.DataFrame({
     "Column Name": df.columns,
     "Data Type": df.dtypes.astype(str),

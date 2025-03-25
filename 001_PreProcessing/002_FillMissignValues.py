@@ -11,7 +11,7 @@ import pandas as pd
 """
 
 # Load the dataset
-df = pd.read_csv('../data/001_dataset_before_preprocessing.csv')
+df = pd.read_csv('../000_Data/001_dataset_before_preprocessing.csv')
 
 # Replace '?' with NaN to properly identify missing values
 df.replace('?', pd.NA, inplace=True)
@@ -42,6 +42,6 @@ for col in df.select_dtypes(include=['object']).columns:
 df[numeric_columns] = df[numeric_columns].apply(lambda x: x.round(2))
 
 # Save the cleaned dataset
-df.to_csv('../data/002_dataset_after_filling_missing_values.csv', index=False)
+df.to_csv('../000_Data/002_dataset_after_filling_missing_values.csv', index=False)
 
 print("Missing values handled and dataset saved as '002_dataset_after_filling_missing_values.csv'")

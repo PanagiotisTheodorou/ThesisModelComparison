@@ -12,6 +12,10 @@ from datetime import datetime
 import pandas as pd
 from colorama import Fore, Style
 
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 # Global dataframe
 df = pd.DataFrame()
 
@@ -25,13 +29,19 @@ from __general_utils__ import (
     encode_categorical
 )
 
-from models.train_RFQ import train_model
+from models.train_RFC import train_RFC
 
 from models.train_SVM import train_SVM
 
+from models.train_DT import train_DT
+
+from models.train_KNN import train_KNN
+
+from models.train_NV import train_naive_bayes
+
 from __postprocessing_utils__ import construct_confussion_matrix_logical, check_overfitting
 
-from models.train_LF import train_LF
+from models.train_LR import train_LR
 
 class MatplotlibCanvas(FigureCanvas):
     def __init__(self, parent=None):
@@ -79,9 +89,12 @@ class MainWindow(QMainWindow):
 
         # Model options
         self.model_options = {
-            "Random Forest": train_model,  # From train_RFQ
-            "Support Vector Machine (SVM)": train_SVM,  # From train_SVM
-            "Linear Regression": train_LF  # From train_LF (example)
+            "Random Forest": train_RFC,
+            "Support Vector Machine (SVM)": train_SVM,
+            "Linear Regression": train_LR,
+            "Decision Tree": train_DT,
+            "KNN": train_KNN,
+            "Naive Bayes": train_naive_bayes
         }
 
         self.initUI()
@@ -295,7 +308,7 @@ class MainWindow(QMainWindow):
         if self.df.empty:
             return
 
-        progress = QProgressDialog("Loading data...", None, 0, len(self.df), self)
+        progress = QProgressDialog("Loading 000_Data...", None, 0, len(self.df), self)
         progress.setWindowTitle("Please wait")
         progress.setWindowModality(Qt.WindowModality.ApplicationModal)
         progress.setMinimumDuration(500)  # Show after 500ms
@@ -350,7 +363,7 @@ class MainWindow(QMainWindow):
         # Reset the application state before training a new model
         self.reset_application_state()
 
-        self.log_message("Initializing data processing...")
+        self.log_message("Initializing 000_Data processing...")
 
         # Show the loading window
         self.loading_window = LoadingWindow()
@@ -362,8 +375,8 @@ class MainWindow(QMainWindow):
         try:
             target_column = 'class'
 
-            print(Fore.YELLOW + "\nPerforming data processing" + Style.RESET_ALL)
-            self.log_message("Performing data processing")
+            print(Fore.YELLOW + "\nPerforming 000_Data processing" + Style.RESET_ALL)
+            self.log_message("Performing 000_Data processing")
 
             # Step 1: Remove unwanted columns
 

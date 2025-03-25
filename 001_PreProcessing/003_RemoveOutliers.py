@@ -13,7 +13,7 @@ import pandas as pd
 # A quantile is a dividing point, that sets apart the distribution to sectors with similar probabilities
 
 # Load dataset
-df = pd.read_csv('../data/002_dataset_after_filling_missing_values.csv')
+df = pd.read_csv('../000_Data/002_dataset_after_filling_missing_values.csv')
 
 # Compute Q1 (25th percentile) and Q3 (75th percentile) for the Age column
 Q1 = df['age'].quantile(0.25)
@@ -30,7 +30,7 @@ upper_bound = Q3 + 1.5 * IQR
 df_filtered = df[(df['age'] >= lower_bound) & (df['age'] <= upper_bound)]
 
 # Save the cleaned dataset
-df_filtered.to_csv('../data/003_dataset_after_removing_outliers.csv', index=False)
+df_filtered.to_csv('../000_Data/003_dataset_after_removing_outliers.csv', index=False)
 
 print(f"Original dataset size: {df.shape[0]} rows")
 print(f"Filtered dataset size: {df_filtered.shape[0]} rows")

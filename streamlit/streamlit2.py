@@ -26,8 +26,10 @@ This app predicts thyroid disease based on input features. Select a model from t
 st.sidebar.header("Model Selection")
 model_options = {
     "Random Forest": "RandomForestModel.pkl",
-    "Support Vector Machine": "SVMModel.pkl",
-    "Logistic Regression": "LogisticRegressionModel.pkl"
+    "Support Vector Machine": "trained_svm_model.pkl",
+    "Logistic Regression": "trained_logistic_model.pkl",
+    "Linear Regression": "trained_linear_regression_model",
+    "Naive Bayes": "trained_naive_bayes_model"
 }
 selected_model = st.sidebar.selectbox("Choose a model", list(model_options.keys()))
 

@@ -125,7 +125,7 @@ class ThyroidApp:
             return
 
         try:
-            # Simulate loading data
+            # Simulate loading 000_Data
             self.output_area.insert(ctk.END, "Dataset loaded successfully!\n")
             self.output_area.insert(ctk.END, "Sample Data:\n")
             self.output_area.insert(ctk.END, "   age sex on_thyroxine  ...   TBG referral_source class\n")

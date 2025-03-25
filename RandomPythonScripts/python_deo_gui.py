@@ -110,7 +110,7 @@ class ThyroidApp:
             return
 
         try:
-            # Simulate loading data
+            # Simulate loading 000_Data
             self.output_area.insert(tk.END, "Dataset loaded successfully!\n")
             self.output_area.insert(tk.END, "Sample Data:\n")
             self.output_area.insert(tk.END, "   age sex on_thyroxine  ...   TBG referral_source class\n")
@@ -263,7 +263,7 @@ class ThyroidApp:
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
     def plot_roc_curve(self):
-        # Hardcoded ROC curve data
+        # Hardcoded ROC curve 000_Data
         fpr = np.linspace(0, 1, 100)
         tpr = np.sin(2 * np.pi * fpr)  # Simulated ROC curve
 
@@ -282,7 +282,7 @@ class ThyroidApp:
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
     def plot_feature_importance(self):
-        # Hardcoded feature importance data
+        # Hardcoded feature importance 000_Data
         features = ['T3', 'FTI', 'TT4', 'T4U', 'TSH', 'TBG', 'age', 'on_thyroxine', 'referral_source', 'sex']
         importance = [0.28, 0.16, 0.15, 0.10, 0.08, 0.06, 0.05, 0.04, 0.03, 0.01]
 
@@ -298,7 +298,7 @@ class ThyroidApp:
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
     def plot_class_distribution(self):
-        # Hardcoded class distribution data
+        # Hardcoded class distribution 000_Data
         classes = ['-', 'A', 'AK', 'B', 'I', 'J', 'K', 'L', 'N', 'R', 'S']
         counts = [255, 17, 17, 18, 26, 18, 78, 18, 18, 27, 18]
 
@@ -337,7 +337,7 @@ class ThyroidApp:
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
     def plot_feature_distribution(self):
-        # Hardcoded feature data
+        # Hardcoded feature 000_Data
         tsh_values = np.random.normal(2.0, 0.5, 1000)
         t3_values = np.random.normal(1.5, 0.3, 1000)
         t4_values = np.random.normal(120, 20, 1000)
@@ -365,7 +365,7 @@ class ThyroidApp:
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
     def plot_precision_recall_curve(self):
-        # Hardcoded precision-recall curve data
+        # Hardcoded precision-recall curve 000_Data
         precision = np.linspace(1, 0, 100)
         recall = np.linspace(0, 1, 100)
 

@@ -190,7 +190,8 @@ def train_model_svm(df, target_column, label_mappings, label_encoders):
         'model': best_model,
         'label_encoders': label_encoders,
         'label_mappings': label_mappings,
-        'scaler': scaler  # Save the scaler for later use
+        'scaler': scaler,  # Save the scaler for later use
+        'feature_names': X.columns.tolist()  # Save the feature names
     }
 
     # Save to a file

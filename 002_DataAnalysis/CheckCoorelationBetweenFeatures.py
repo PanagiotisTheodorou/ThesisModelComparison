@@ -12,7 +12,7 @@ columns_to_convert = ['TSH', 'T3', 'TT4', 'T4U', 'FTI', 'TBG']  # Add other rele
 for column in columns_to_convert:
     raw[column] = pd.to_numeric(raw[column], errors='coerce')
 
-# Check the data types again
+# Check the 000_Data types again
 print(raw.dtypes)
 
 # Select only numeric columns
