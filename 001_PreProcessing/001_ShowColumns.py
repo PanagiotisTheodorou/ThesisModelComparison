@@ -12,7 +12,7 @@ from tkinter import ttk
 """
 
 # Load the dataset
-df = pd.read_csv("../data/ThyroxineDataLastDataset.csv")
+df = pd.read_csv("../data/001_dataset_before_preprocessing.csv")
 
 # Replace '?' with NaN to properly identify missing values
 df.replace('?', pd.NA, inplace=True)

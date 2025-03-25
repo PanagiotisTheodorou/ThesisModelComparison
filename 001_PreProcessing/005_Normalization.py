@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 """
 
 # Load the dataset
-file_path = "../data/ThyroxineData_Cleaned_NoOutliers.csv"
+file_path = "../data/003_dataset_after_removing_outliers.csv"
 df = pd.read_csv(file_path)
 
 # Identify categorical columns (non-numeric)

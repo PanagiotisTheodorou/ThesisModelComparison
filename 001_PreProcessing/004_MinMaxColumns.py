@@ -11,7 +11,7 @@ import seaborn as sns
 """
 
 # Load the dataset
-df = pd.read_csv('../data/ThyroxineData_Cleaned_NoOutliers.csv')
+df = pd.read_csv('../data/003_dataset_after_removing_outliers.csv')
 
 # Select only numeric columns
 numeric_columns = df.select_dtypes(include=['number'])
