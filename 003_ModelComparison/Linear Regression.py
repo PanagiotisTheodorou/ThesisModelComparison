@@ -5,8 +5,6 @@ The following code trains a Random Forest Model by applying the strategy mention
 
 import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, \
-    roc_auc_score
 import matplotlib.pyplot as plt
 import time
 from sklearn.ensemble import RandomForestClassifier
@@ -20,21 +18,18 @@ import warnings
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score
+from utils import load_data, remove_outliers, remove_unwanted_columns, fill_missing_values, encode_categorical
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 #Initialize colorama
 init(autoreset=True)
 
-from utils import load_data, remove_outliers, remove_unwanted_columns, fill_missing_values, encode_categorical
-
-
 def balance_dataset(df, target_column):
     """
         Function to balance dataset
-        TODO add explanation for the formula
     """
-    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes proportionally..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes proportionally" + Style.RESET_ALL)
 
     # Count occurrences of each class
     class_counts = df[target_column].value_counts()
@@ -77,82 +72,52 @@ def balance_dataset(df, target_column):
     return balanced_df
 
 
-def feature_selection(x_train, y_train, x_test, threshold=0.01):
-    """
-    Perform feature selection using Random Forest feature importance.
-    Features with importance greater than the threshold are selected.
-    """
-    print(Fore.GREEN + "\nPerforming feature selection..." + Style.RESET_ALL)
-
-    # Train a Random Forest model to get feature importance
-    rf = RandomForestClassifier(random_state=42)
-    rf.fit(x_train, y_train)
-
-    # Get feature importance
-    importances = rf.feature_importances_
-    feature_names = x_train.columns
-
-    # Create a DataFrame to display feature importances
-    feature_importance_df = pd.DataFrame({
-        "Feature": feature_names,
-        "Importance": importances
-    }).sort_values(by="Importance", ascending=False)
-
-    # Display feature importances
-    print(Fore.CYAN + "\nFeature importances:" + Style.RESET_ALL)
-    print(feature_importance_df)
-
-    # Select features with importance greater than the threshold
-    selected_features = feature_importance_df[feature_importance_df["Importance"] > threshold]["Feature"].tolist()
-
-    print(Fore.LIGHTGREEN_EX + f"\nSelected Features (Importance > {threshold}):" + Style.RESET_ALL)
-    print(selected_features)
-
-    # Filter the datasets to include only selected features
-    x_train_selected = x_train[selected_features]
-    x_test_selected = x_test[selected_features]
-
-    return x_train_selected, x_test_selected, feature_importance_df
-
 def train_model_linear_regression(df, target_column, label_mappings, label_encoders):
     """
-    Function to train a Linear Regression model. Steps:
-    1. Filter rare classes, and for those apply the balancing logic.
-    2. Split between dependent and non-dependent columns.
-    3. Split the dataset into test and train.
-    4. Perform feature scaling.
-    5. Create and train the model.
-    6. Evaluate the model using RMSE and R2 score.
-    7. Print out the model statistics, then return the chosen model.
+        Function to train a Linear Regression model. Steps:
+        1. Filter rare classes, and for those apply the balancing logic.
+        2. Split between dependent and non-dependent columns.
+        3. Split the dataset into test and train.
+        4. Perform feature scaling.
+        5. Create and train the model.
+        6. Evaluate the model using RMSE and R2 score.
+        7. Print out the model statistics, then return the chosen model.
     """
-    print(Fore.GREEN + "\nTraining Linear Regression model..." + Style.RESET_ALL)
-
-    # Filter rare classes
-    print(Fore.LIGHTGREEN_EX + "Filtering rare classes..." + Style.RESET_ALL)
-    class_counts = df[target_column].value_counts()
-    valid_classes = class_counts[class_counts >= 10].index
-    df = df[df[target_column].isin(valid_classes)]
+    print(Fore.GREEN + "\nTraining Linear Regression model" + Style.RESET_ALL)
 
     # Balance the dataset
-    print(Fore.LIGHTGREEN_EX + "Applying dataset balancing..." + Style.RESET_ALL)
+    print(Fore.LIGHTGREEN_EX + "Applying dataset balancing" + Style.RESET_ALL)
+
     df = balance_dataset(df, target_column)
 
     # Split into features (X) and target (y)
     X = df.drop(columns=[target_column])
     y = df[target_column]
 
-    # Perform stratified train-test split
-    print(Fore.LIGHTGREEN_EX + "Performing stratified train-test split..." + Style.RESET_ALL)
+    # Splitting Dataset
+    print(Fore.LIGHTGREEN_EX + "Performing stratified train-test split" + Style.RESET_ALL)
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
     # Perform feature scaling
-    print(Fore.LIGHTGREEN_EX + "Performing feature scaling..." + Style.RESET_ALL)
+    print(Fore.LIGHTGREEN_EX + "Performing feature scaling" + Style.RESET_ALL)
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+
+    # Fit transform while preserving DataFrame structure
+    X_train_scaled = pd.DataFrame(
+        scaler.fit_transform(X_train),
+        columns=X_train.columns,
+        index=X_train.index
+    )
+
+    X_test_scaled = pd.DataFrame(
+        scaler.transform(X_test),
+        columns=X_test.columns,
+        index=X_test.index
+    )
 
     # Train the Linear Regression model
-    print(Fore.LIGHTGREEN_EX + "Training Linear Regression model..." + Style.RESET_ALL)
+    print(Fore.LIGHTGREEN_EX + "Training Linear Regression model" + Style.RESET_ALL)
     lr = LinearRegression()
     lr.fit(X_train_scaled, y_train)
 
@@ -171,7 +136,7 @@ def train_model_linear_regression(df, target_column, label_mappings, label_encod
         'model': lr,
         'label_encoders': label_encoders,
         'label_mappings': label_mappings,
-        'scaler': scaler  # Save the scaler for later use
+        'scaler': scaler
     }
 
     # Save to a file
@@ -183,17 +148,17 @@ def train_model_linear_regression(df, target_column, label_mappings, label_encod
 
 def decode_predictions(predictions, label_mappings, column_name):
     """
-    Convert numerical predictions back to categorical labels.
+        Convert numerical predictions back to categorical labels.
     """
     return predictions.map(label_mappings[column_name])
 
 
 def check_overfitting(model, x_train, y_train, x_test, y_test):
     """
-    Function to check for overfitting by comparing training and test RMSE and R2 scores.
-    Also performs cross-validation to verify model generalization.
+        Function to check for overfitting by comparing training and test RMSE and R2 scores.
+        Also performs cross-validation to verify model generalization.
     """
-    print(Fore.GREEN + "\nChecking for Overfitting..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nChecking for Overfitting" + Style.RESET_ALL)
 
     # Predict on training and test sets
     y_train_pred = model.predict(x_train)
@@ -223,33 +188,10 @@ def check_overfitting(model, x_train, y_train, x_test, y_test):
         print(Fore.LIGHTGREEN_EX + "No significant overfitting detected." + Style.RESET_ALL)
 
 
-def plot_roc_auc(model, x_test, y_test):
-    """
-        Function to create a plot for the AUC and ROC curves,
-        It takes the labels (classes), and gets the probability metrics
-        Then it calculates the AUC ROC curve for all
-    """
-    y_test_bin = label_binarize(y_test, classes=[0, 1, 2, 3, 7, 8, 9, 11, 13, 17, 18])
-    y_scores = model.predict_proba(x_test)  # Get probability scores
-
-    plt.figure(figsize=(10, 6))
-
-    for i in range(y_test_bin.shape[1]):
-        fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_scores[:, i])
-        roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, label=f'Class {i} (AUC = {roc_auc:.2f})')
-
-    plt.plot([0, 1], [0, 1], 'k--')  # Diagonal line
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("Multi-Class ROC Curve")
-    plt.legend()
-    plt.show()
-
 def print_roc_auc(model, x_test, y_test, label_mappings, target_column):
     """
-    Function to calculate and print AUC-ROC values for each class in the terminal.
-    Uses class names instead of numeric labels.
+        Function to calculate and print AUC-ROC values for each class in the terminal.
+        Uses class names instead of numeric labels.
     """
     # Binarize the labels for multi-class ROC-AUC calculation
     classes = np.unique(y_test)
@@ -267,8 +209,8 @@ def print_roc_auc(model, x_test, y_test, label_mappings, target_column):
 
 def evaluate_regression_model(model, x_test, y_test, model_name):
     """
-    Function to evaluate a regression model.
-    It prints RMSE, R2 score, and other regression metrics.
+        Function to evaluate a regression model.
+        It prints RMSE, R2 score, and other regression metrics.
     """
     # Predict the results
     y_pred = model.predict(x_test)
@@ -291,7 +233,7 @@ def main():
 
     start_time = time.time()
 
-    print(Fore.CYAN + "\nStarting script execution..." + Style.RESET_ALL)
+    print(Fore.CYAN + "\nStarting script execution" + Style.RESET_ALL)
 
     df = load_data(file_path)
     df = remove_unwanted_columns(df)
@@ -304,7 +246,7 @@ def main():
     for col, mapping in label_mappings.items():
         print(f"{col}: {mapping}")
 
-    df.to_csv("cleaned_dataset.csv", index=False)
+    df.to_csv("../000_Data/cleaned_dataset_after_linr.csv", index=False)
     print(Fore.GREEN + "Cleaned dataset saved!\n" + Style.RESET_ALL)
 
     print("Starting Linear Regression model training")

@@ -8,8 +8,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, \
     roc_auc_score
 import time
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import roc_curve, auc
@@ -70,60 +69,48 @@ def balance_dataset(df, target_column):
 
     return balanced_df
 
-def train_model_knn(df, target_column, label_mappings, label_encoders):
+
+def train_model_random_forest(df, target_column, label_mappings, label_encoders):
     """
-        Function to train a K-Nearest Neighbors (KNN) model. Steps:
-        1. Filter rare classes, and for those apply the balancing logic.
-        2. Split between dependent and non-dependent columns.
-        3. Split the dataset into test and train.
-        4. Perform feature scaling.
-        5. Create and train the model.
-        6. Apply GridSearchCV to find the best hyperparameters.
-        7. Print out the best model and statistics, then return the chosen model.
+            Function to train the model, Steps:
+            1. Filter rare classes, and for those apply the balancing logic
+            2. split between dependent and non-dependent column
+            3. Split the dataset to test and train
+            4. Create a parameter grid for hyperparameter tuning
+            5. Create and Train the model
+            6. Apply Grid search so that the interpreter will loop through the available parameters and find the best ones
+            7. Print out the best model, and the statistics, then return the chosen model
     """
-    print(Fore.GREEN + "\nTraining K-Nearest Neighbors (KNN) model" + Style.RESET_ALL)
+
+    print(Fore.GREEN + "\nTrain model" + Style.RESET_ALL)
 
     # Balance the dataset
     print(Fore.LIGHTGREEN_EX + "Applying dataset balancing" + Style.RESET_ALL)
+
     df = balance_dataset(df, target_column)
 
     # Split into features - X and target - y
-    X = df.drop(columns=[target_column])
+    x = df.drop(columns=[target_column])
     y = df[target_column]
 
-    # Splitting Dataset
     print(Fore.LIGHTGREEN_EX + "Splitting Dataset" + Style.RESET_ALL)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-
-    # Perform feature scaling
-    print(Fore.LIGHTGREEN_EX + "Performing feature scaling" + Style.RESET_ALL)
-    scaler = StandardScaler()
-
-    # Fit transform while preserving DataFrame structure
-    X_train_scaled = pd.DataFrame(
-        scaler.fit_transform(X_train),
-        columns=X_train.columns,
-        index=X_train.index
-    )
-
-    X_test_scaled = pd.DataFrame(
-        scaler.transform(X_test),
-        columns=X_test.columns,
-        index=X_test.index
-    )
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42, stratify=y)
 
     # Hyperparameter tuning using GridSearchCV
     print(Fore.LIGHTGREEN_EX + "Hyperparameter tuning using GridSearchCV" + Style.RESET_ALL)
+
     param_grid = {
-        "n_neighbors": [3, 5, 7, 9, 11],
-        "weights": ["uniform", "distance"],
-        "metric": ["euclidean", "manhattan"]
+        "n_estimators": [50, 100, 200],
+        "max_depth": [5, 10, 15, None],
+        "min_samples_split": [2, 5, 10],
+        "min_samples_leaf": [1, 2, 4],
+        "bootstrap": [True, False]
     }
 
-    knn = KNeighborsClassifier()
-    grid_search = GridSearchCV(knn, param_grid, cv=5, scoring="accuracy", n_jobs=-1)
-    grid_search.fit(X_train_scaled, y_train)
+    rf = RandomForestClassifier(class_weight="balanced", random_state=42)
+    grid_search = GridSearchCV(rf, param_grid, cv=5, scoring="accuracy", n_jobs=-1)
+    grid_search.fit(x_train, y_train)
 
     # Print best parameters
     print(Fore.LIGHTGREEN_EX + f"Best Parameters: {grid_search.best_params_}" + Style.RESET_ALL)
@@ -132,9 +119,9 @@ def train_model_knn(df, target_column, label_mappings, label_encoders):
     best_model = grid_search.best_estimator_
 
     # Make predictions
-    predictions = best_model.predict(X_test_scaled)
+    predictions = best_model.predict(x_test)
 
-    # Print accuracy
+    # print accuracy
     print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy_score(y_test, predictions):.4f}" + Style.RESET_ALL)
 
     # Decode numeric labels back to original class labels
@@ -150,14 +137,14 @@ def train_model_knn(df, target_column, label_mappings, label_encoders):
         'model': best_model,
         'label_encoders': label_encoders,
         'label_mappings': label_mappings,
-        'scaler': scaler
+        'scaler': None
     }
 
     # Save pickle
-    joblib.dump(model_data, '../005_UserUI/trained_knn_model.pkl')
-    print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_knn_model.pkl'." + Style.RESET_ALL)
+    joblib.dump(model_data, '../005_UserUI/trained_random_forest_model.pkl')
+    print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_random_forest_model.pkl'." + Style.RESET_ALL)
 
-    return best_model, X_train_scaled, X_test_scaled, y_train, y_test
+    return best_model, x_train, x_test, y_train, y_test
 
 
 def decode_predictions(predictions, label_mappings, column_name):
@@ -178,15 +165,17 @@ def check_overfitting(model, x_train, y_train, x_test, y_test):
     y_train_pred = model.predict(x_train)
     y_test_pred = model.predict(x_test)
 
-    # Compute accuracies
+    # Compute and print accuracies
     train_acc = accuracy_score(y_train, y_train_pred)
     test_acc = accuracy_score(y_test, y_test_pred)
 
     print(Fore.LIGHTGREEN_EX + f"Training Accuracy: {train_acc:.4f}" + Style.RESET_ALL)
+
     print(Fore.LIGHTGREEN_EX + f"Test Accuracy: {test_acc:.4f}" + Style.RESET_ALL)
 
     # Perform cross-validation
     cv_scores = cross_val_score(model, x_train, y_train, cv=5, scoring="accuracy")
+
     print(Fore.LIGHTGREEN_EX + f"Cross-Validation Accuracy: {cv_scores.mean():.4f} +/- {cv_scores.std():.4f}" + Style.RESET_ALL)
 
     # Check for overfitting
@@ -204,7 +193,7 @@ def print_roc_auc(model, x_test, y_test, label_mappings, target_column):
     # Binarize the labels for multi-class ROC-AUC calculation
     classes = np.unique(y_test)
     y_test_bin = label_binarize(y_test, classes=classes)
-    y_scores = model.predict_proba(x_test)  # Get probability scores
+    y_scores = model.predict_proba(x_test)  # Gets te probability scores
 
     print(Fore.GREEN + "\nAUC-ROC Values for Each Class:" + Style.RESET_ALL)
     for i, cls in enumerate(classes):
@@ -295,23 +284,23 @@ def main():
     for col, mapping in label_mappings.items():
         print(f"{col}: {mapping}")
 
-    df.to_csv("../000_Data/cleaned_dataset_after_knn.csv", index=False)
+    df.to_csv("../000_Data/cleaned_dataset_after_rf.csv", index=False)
     print(Fore.GREEN + "Cleaned dataset saved!\n" + Style.RESET_ALL)
 
-    print("Starting KNN model training")
-    model, x_train_scaled, x_test_scaled, y_train, y_test = train_model_knn(df, target_column, label_mappings, label_encoders)
+    print("Starting model training")
+    model, x_train, x_test, y_train, y_test = train_model_random_forest(df, target_column, label_mappings, label_encoders)
 
     # Check for overfitting
-    check_overfitting(model, x_train_scaled, y_train, x_test_scaled, y_test)
+    check_overfitting(model, x_train, y_train, x_test, y_test)
 
     # Construct and display confusion matrix and additional metrics in the console
-    construct_confussion_matrix(model, x_test_scaled, y_test, label_mappings, model_name="KNN")
+    construct_confussion_matrix(model, x_test, y_test, label_mappings, model_name="Random Forest")
 
     end_time = time.time()
     print(Fore.GREEN + f"\nScript execution finished! Total time: {end_time - start_time:.2f} seconds\n" + Style.RESET_ALL)
 
     # Plot AUC-ROC curve instead of confusion matrix
-    print_roc_auc(model, x_test_scaled, y_test, label_mappings, target_column)
+    print_roc_auc(model, x_test, y_test, label_mappings, target_column)
 
 
 if __name__ == "__main__":
