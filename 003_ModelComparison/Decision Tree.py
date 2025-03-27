@@ -267,7 +267,7 @@ def construct_confussion_matrix(model, x_test, y_test, label_mappings, model_nam
 
 
 def main():
-    file_path = 'raw_with_general_classes.csv'
+    file_path = '../000_Data/raw_with_general_classes.csv'
     target_column = 'class'
 
     start_time = time.time()

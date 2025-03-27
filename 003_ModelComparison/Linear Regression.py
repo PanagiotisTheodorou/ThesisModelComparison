@@ -228,7 +228,7 @@ def evaluate_regression_model(model, x_test, y_test, model_name):
 
 
 def main():
-    file_path = 'raw_with_general_classes.csv'
+    file_path = '../000_Data/raw_with_general_classes.csv'
     target_column = 'class'
 
     start_time = time.time()
