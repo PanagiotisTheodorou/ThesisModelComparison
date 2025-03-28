@@ -5,35 +5,36 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-# Load the dataset
-file_path = "../003_ModelComparison/raw.csv"
+file_path = "../000_Data/raw.csv"
 raw = pd.read_csv(file_path)
 
-# Identify categorical columns that need encoding
+# get categrical columns
 categorical_columns = raw.select_dtypes(include=['object']).columns
 
-# Initialize the LabelEncoder
 label_encoder = LabelEncoder()
 
-# Apply label encoding to categorical columns
+# apply label encoding for categorical columns
 for col in categorical_columns:
     raw[col] = label_encoder.fit_transform(raw[col])
 
-# Prepare the 000_Data (X = features, y = target class)
+# Prepare the data
+# X = features
+# y = target class
+
 X = raw.drop(columns=['class'])
 y = raw['class']
 
-# Split the 000_Data into training and testing sets
+# Split the data into training and testig
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Train a RandomForestClassifier
+# Train a random forest
 model = RandomForestClassifier(random_state=42)
 model.fit(X_train, y_train)
 
-# Get feature importances
+# Get feature importance
 feature_importances = model.feature_importances_
 
-# Create a DataFrame with feature names and their importance scores
+#make a Data Frame
 feature_importance_df = pd.DataFrame({
     'Feature': X.columns,
     'Importance': feature_importances

@@ -2,23 +2,20 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Load the dataset
-file_path = "../003_ModelComparison/raw.csv"
+file_path = "../000_Data/raw.csv"
 raw = pd.read_csv(file_path)
 
-# Convert relevant columns to numeric (adjust the column names as needed)
-columns_to_convert = ['TSH', 'T3', 'TT4', 'T4U', 'FTI', 'TBG']  # Add other relevant columns here
+columns_to_convert = ['TSH', 'T3', 'TT4', 'T4U', 'FTI', 'TBG']
 
 for column in columns_to_convert:
     raw[column] = pd.to_numeric(raw[column], errors='coerce')
 
-# Select numerical features again after conversion
+# Select numerical features
 numerical_features = raw.select_dtypes(include=['float64', 'int64']).columns
 
-# Check the numerical features now
 print(f'Numerical features: {numerical_features}')
 
-# Create scatter plots for pairwise relationships between numerical features
+# Create scatter plots to show relationships between numerical features
 for i in range(len(numerical_features)):
     for j in range(i + 1, len(numerical_features)):
         try:
@@ -29,7 +26,6 @@ for i in range(len(numerical_features)):
             plt.xlabel(numerical_features[i])
             plt.ylabel(numerical_features[j])
 
-            # Adjust legend to the right of the plot
             plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
             plt.show()

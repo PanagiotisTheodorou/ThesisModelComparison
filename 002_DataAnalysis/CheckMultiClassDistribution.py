@@ -1,14 +1,11 @@
-# load_and_visualize.py
-
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Load the dataset
-file_path = "../003_ModelComparison/raw.csv"
+file_path = "../000_Data/raw.csv"
 raw = pd.read_csv(file_path)
 
-# Plot the class distribution before transformation
+# show class distribution before transformetion
 plt.figure(figsize=(10, 6))
 sns.countplot(x='class', data=raw, order=raw['class'].value_counts().index)
 plt.title('Distribution of Classes Before Transformation')
