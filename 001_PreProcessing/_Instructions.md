@@ -16,4 +16,4 @@ In this folder, I first go through the dataset in order to take note of some imp
   **Feature selection** is necessary because some columns are **mutually exclusive**. Removing redundant features will simplify the model and improve its generalization ability.
 
 - **Class Transformation:**  
-  The classes in the dataset currently include **both the class label and an identification number**. These identification numbers must be removed, and the class should be transformed into a more general and meaningful label. This will ensure the classes are consistent and ready for analysis.
+  The classes in the dataset currently include **both the class label and an identification number**. These identification numbers must be removed, and the class should be transformed into a more general and meaningful label, which is performed in the script 006_RedefineClasses.py

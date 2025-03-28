@@ -6,12 +6,10 @@ This folder is dedicated to a deeper understanding of the dataset. The primary f
 
 The following analyses are performed in this folder:  
 
-- **Feature Importance** (`AnalyzeFeatureImportance`): Determines which features contribute the most to predictions.  
-- **Class Imbalance** (`CheckClassImbalance`): Identifies imbalances in class distribution.  
+- **Feature Importance** (`AnalyzeFeatureImportance`): Determines which features are most important to the classification.  
+- **Class Imbalance** (`CheckClassImbalance`): Identifes imbalances.  
 - **Class Imbalance Without Majority** (`CheckClassImbalanceWithoutMajority`): Analyzes class distribution after removing the majority class.  
-- **Feature Correlation** (`CheckCoorelationBetweenFeatures`): Examines relationships between different features.  
-- **Feature Distribution** (`CheckFeatureDistribution`): Visualizes how each feature is distributed.  
+- **Feature Correlation** (`CheckCoorelationBetweenFeatures`): Examines relationships between features.  
+- **Feature Distribution** (`CheckFeatureDistribution`): views how each feature is distributed.  
 - **Multi-Class Distribution** (`CheckMultiClassDistribution`): Investigates how different classes are spread within the dataset.  
-- **Scatter Plot Analysis** (`ScatterPlotAnalysis`): Generates scatter plots to explore feature relationships.  
-
-You can also add more analyses by following the structure of the existing files. 🚀  
+- **Scatter Plot Analysis** (`ScatterPlotAnalysis`): Generates scatter plots for relationships.
