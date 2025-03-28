@@ -11,7 +11,6 @@ from tkinter import ttk
         5. Adds the records that depict the columns
 """
 
-# Load the dataset
 df = pd.read_csv("../000_Data/001_dataset_before_preprocessing.csv")
 
 # Replace '?' with NaN to properly identify missing values
@@ -25,20 +24,19 @@ column_info = pd.DataFrame({
     "Missing Count": df.isnull().sum().astype(str)
 })
 
-# Calculate optimal window size
 row_count = len(column_info)
 window_height = min(50 + row_count * 20, 800)
 
-# Create the main window
+# main window
 root = tk.Tk()
 root.title("Column Data Types & Missing Values")
 root.geometry(f"800x{window_height}")
 
-# Create a frame with a border for the table
+# Create frame
 frame = ttk.Frame(root, padding=10, borderwidth=2, relief="ridge")
 frame.pack(expand=True, fill="both")
 
-# Create a table
+# Create table
 tree = ttk.Treeview(frame, show="headings",
                      columns=["Column Name", "Data Type", "Has Missing Values", "Missing Count"])
 
@@ -61,7 +59,6 @@ style.configure("Treeview.Heading", font=("Arial", 10, "bold"))
 for _, row in column_info.iterrows():
     tree.insert("", "end", values=list(row))
 
-# Pack the table to fill space
 tree.pack(expand=True, fill="both")
 
 root.mainloop()

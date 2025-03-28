@@ -1,14 +1,12 @@
 
 """
-The following code trains a Random Forest Model by applying the strategy mentioned in the report
+The following code trains a Linear Refression Model
 """
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import time
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
@@ -90,7 +88,7 @@ def train_model_linear_regression(df, target_column, label_mappings, label_encod
 
     df = balance_dataset(df, target_column)
 
-    # Split into features (X) and target (y)
+    # Split into features - X and target - y
     X = df.drop(columns=[target_column])
     y = df[target_column]
 
@@ -103,7 +101,7 @@ def train_model_linear_regression(df, target_column, label_mappings, label_encod
     print(Fore.LIGHTGREEN_EX + "Performing feature scaling" + Style.RESET_ALL)
     scaler = StandardScaler()
 
-    # Fit transform while preserving DataFrame structure
+    # Fit transform while keeping DataFrame structure
     X_train_scaled = pd.DataFrame(
         scaler.fit_transform(X_train),
         columns=X_train.columns,
@@ -139,7 +137,7 @@ def train_model_linear_regression(df, target_column, label_mappings, label_encod
         'scaler': scaler
     }
 
-    # Save to a file
+    # Save pickle
     joblib.dump(model_data, '../005_UserUI/trained_linear_regression_model.pkl')
     print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_linear_regression_model.pkl'." + Style.RESET_ALL)
 
@@ -182,7 +180,7 @@ def check_overfitting(model, x_train, y_train, x_test, y_test):
     print(Fore.LIGHTGREEN_EX + f"Cross-Validation RMSE: {cv_rmse:.4f} +/- {np.sqrt(-cv_scores).std():.4f}" + Style.RESET_ALL)
 
     # Check for overfitting
-    if train_rmse < test_rmse - 0.05:  # If training RMSE is much lower than test RMSE
+    if train_rmse < test_rmse - 0.05:
         print(Fore.RED + "Possible Overfitting Detected!" + Style.RESET_ALL)
     else:
         print(Fore.LIGHTGREEN_EX + "No significant overfitting detected." + Style.RESET_ALL)

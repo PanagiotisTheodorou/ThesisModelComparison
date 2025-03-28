@@ -174,7 +174,7 @@ class MainWindow(QMainWindow):
         """)
         model_layout.addWidget(self.model_dropdown)
 
-        # Bottom divider
+        # Bottom dividing point
         line_bottom = QFrame()
         line_bottom.setFrameShape(QFrame.Shape.HLine)
         line_bottom.setFrameShadow(QFrame.Shadow.Sunken)
@@ -183,7 +183,7 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(model_widget)
 
-        # Tab for Data, Logs, Results, and Charts
+        # Tab for Data, Logs,and  Results
         self.tabs = QTabWidget()
         self.tabs.setStyleSheet("""
             QTabWidget::pane { /* The tab widget frame */
@@ -386,7 +386,7 @@ class MainWindow(QMainWindow):
         divider.setLineWidth(1)
         self.scroll_layout.addWidget(divider)
 
-        canvas.draw()  # Render the plot
+        canvas.draw()
         self.scroll_content.adjustSize()
 
 

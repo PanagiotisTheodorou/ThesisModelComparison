@@ -64,9 +64,9 @@ def fill_missing_values(df):
 
 def encode_categorical(df):
     """
-    Function to encode categorical data using label encoding.
-    This is done so that the model can understand the categories.
-    It also stores the mapping for decoding labels later.
+        Function to encode categorical data using label encoding.
+        This is done so that the model can understand the categories.
+        It also stores the mapping for decoding labels later.
     """
 
     print(Fore.GREEN + "\nEncoding categorical variables" + Style.RESET_ALL)
@@ -78,7 +78,7 @@ def encode_categorical(df):
         le = LabelEncoder()
         df[col] = le.fit_transform(df[col])
         label_encoders[col] = le
-        label_mappings[col] = dict(enumerate(le.classes_))  # Store mapping
+        label_mappings[col] = dict(enumerate(le.classes_))
 
     print(Fore.LIGHTGREEN_EX + "Categorical columns encoded.\n" + Style.RESET_ALL)
 

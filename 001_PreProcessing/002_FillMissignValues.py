@@ -10,7 +10,6 @@ import pandas as pd
         6. saves the new dataset for future use
 """
 
-# Load the dataset
 df = pd.read_csv('../000_Data/001_dataset_before_preprocessing.csv')
 
 # Replace '?' with NaN to properly identify missing values

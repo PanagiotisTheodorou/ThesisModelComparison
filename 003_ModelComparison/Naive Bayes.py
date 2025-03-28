@@ -1,6 +1,6 @@
 
 """
-    The following code trains a Random Forest Model
+    The following code trains a Naive Bates Model
 """
 
 import pandas as pd
@@ -27,18 +27,18 @@ def balance_dataset(df, target_column):
     """
         Function to balance dataset
     """
-    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes proportionally" + Style.RESET_ALL)
+    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes" + Style.RESET_ALL)
 
     # Count occurrences of each class
     class_counts = df[target_column].value_counts()
     majority_class = class_counts.idxmax()
     minority_classes = class_counts[class_counts.index != majority_class].index
 
-    # Compute total occurrences of all minority classes
+    # Compute ocurrences of all minority classes
     total_minority_occurrences = class_counts[minority_classes].sum()
     num_minority_classes = len(minority_classes)
 
-    # Determine target occurrences for each minority class
+    # Determine  occurrences for each minority class
     target_counts = total_minority_occurrences // num_minority_classes
     sampling_strategy = {}
 
@@ -160,7 +160,7 @@ def check_overfitting(model, x_train, y_train, x_test, y_test):
     print(Fore.LIGHTGREEN_EX + f"Cross-Validation Accuracy: {cv_scores.mean():.4f} +/- {cv_scores.std():.4f}" + Style.RESET_ALL)
 
     # Check for overfitting
-    if train_acc > test_acc + 0.05:  # If train accuracy is much higher than test accuracy
+    if train_acc > test_acc + 0.05:
         print(Fore.RED + "Possible Overfitting Detected!" + Style.RESET_ALL)
     else:
         print(Fore.LIGHTGREEN_EX + "No significant overfitting detected." + Style.RESET_ALL)
@@ -230,11 +230,11 @@ def construct_confussion_matrix(model, x_test, y_test, label_mappings, model_nam
     # Calculate tp, tn, fp, fn for each class
     print(Fore.LIGHTGREEN_EX + "\nShowing the tp, tn, fp, fn rate for each class:" + Style.RESET_ALL)
     print('-------------------------')
-    for i, class_label in enumerate(class_labels):  # Use decoded class labels
-        tp = cm[i, i]  # True Positives for the current class
-        fp = cm[:, i].sum() - tp  # False Positives for the current class
-        fn = cm[i, :].sum() - tp  # False Negatives for the current class
-        tn = cm.sum() - (tp + fp + fn)  # True Negatives for the current class
+    for i, class_label in enumerate(class_labels):
+        tp = cm[i, i]
+        fp = cm[:, i].sum() - tp
+        fn = cm[i, :].sum() - tp
+        tn = cm.sum() - (tp + fp + fn)
 
         print(Fore.YELLOW + f"Class {class_label}:" + Style.RESET_ALL)
         print(Fore.GREEN + f"True Positives (tp): {tp}" + Style.RESET_ALL)

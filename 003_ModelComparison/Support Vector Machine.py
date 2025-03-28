@@ -7,7 +7,6 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, \
     roc_auc_score
-import matplotlib.pyplot as plt
 import time
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
@@ -155,7 +154,7 @@ def train_model_svm(df, target_column, label_mappings, label_encoders):
         'scaler': scaler
     }
 
-    # Save to a file
+    # Save pickle
     joblib.dump(model_data, '../005_UserUI/trained_svm_model.pkl')
     print(Fore.LIGHTGREEN_EX + "Model and preprocessing objects saved to 'trained_svm_model.pkl'." + Style.RESET_ALL)
 
@@ -192,7 +191,7 @@ def check_overfitting(model, x_train, y_train, x_test, y_test):
     print(Fore.LIGHTGREEN_EX + f"Cross-Validation Accuracy: {cv_scores.mean():.4f} +/- {cv_scores.std():.4f}" + Style.RESET_ALL)
 
     # Check for overfitting
-    if train_acc > test_acc + 0.05:  # If train accuracy is much higher than test accuracy
+    if train_acc > test_acc + 0.05:
         print(Fore.RED + "Possible Overfitting Detected!" + Style.RESET_ALL)
     else:
         print(Fore.LIGHTGREEN_EX + "No significant overfitting detected." + Style.RESET_ALL)
@@ -262,11 +261,11 @@ def construct_confussion_matrix(model, x_test, y_test, label_mappings, model_nam
     # Calculate tp, tn, fp, fn for each class
     print(Fore.LIGHTGREEN_EX + "\nShowing the tp, tn, fp, fn rate for each class:" + Style.RESET_ALL)
     print('-------------------------')
-    for i, class_label in enumerate(class_labels):  # Use decoded class labels
-        tp = cm[i, i]  # True Positives for the current class
-        fp = cm[:, i].sum() - tp  # False Positives for the current class
-        fn = cm[i, :].sum() - tp  # False Negatives for the current class
-        tn = cm.sum() - (tp + fp + fn)  # True Negatives for the current class
+    for i, class_label in enumerate(class_labels):
+        tp = cm[i, i]
+        fp = cm[:, i].sum() - tp
+        fn = cm[i, :].sum() - tp
+        tn = cm.sum() - (tp + fp + fn)
 
         print(Fore.YELLOW + f"Class {class_label}:" + Style.RESET_ALL)
         print(Fore.GREEN + f"True Positives (tp): {tp}" + Style.RESET_ALL)

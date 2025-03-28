@@ -6,7 +6,7 @@ from colorama import Fore, Style
 
 from __general_utils__ import decode_predictions
 
-from __preprocessing_utils__ import balance_dataset, feature_selection
+from __preprocessing_utils__ import balance_dataset
 
 def train_RFC(df, target_column, label_mappings):
     print(Fore.GREEN + "\nTraining Random Forest model" + Style.RESET_ALL)

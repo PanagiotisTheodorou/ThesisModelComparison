@@ -6,7 +6,6 @@ from colorama import Fore, Style
 from __general_utils__ import decode_predictions
 from __preprocessing_utils__ import balance_dataset
 from sklearn.preprocessing import StandardScaler
-import numpy as np
 
 def train_SVM(df, target_column, label_mappings):
 

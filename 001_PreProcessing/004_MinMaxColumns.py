@@ -18,7 +18,6 @@ numeric_columns = df.select_dtypes(include=['number'])
 # Calculate min, mean, and max
 summary_stats = numeric_columns.agg(['min', 'mean', 'max'])
 
-# Print the results
 print(summary_stats)
 
 # plot for outlier detection

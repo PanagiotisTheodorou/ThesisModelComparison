@@ -1,6 +1,6 @@
 
 """
-    The following code trains a Random Forest Model
+    The following code trains a KNN
 """
 
 import pandas as pd
@@ -100,7 +100,7 @@ def train_model_knn(df, target_column, label_mappings, label_encoders):
     print(Fore.LIGHTGREEN_EX + "Performing feature scaling" + Style.RESET_ALL)
     scaler = StandardScaler()
 
-    # Fit transform while preserving DataFrame structure
+    # Fit transform while keping DataFrame structure
     X_train_scaled = pd.DataFrame(
         scaler.fit_transform(X_train),
         columns=X_train.columns,
@@ -201,7 +201,7 @@ def print_roc_auc(model, x_test, y_test, label_mappings, target_column):
         Function to calculate and print AUC-ROC values for each class in the terminal.
         Uses class names instead of numeric labels.
     """
-    # Binarize the labels for multi-class ROC-AUC calculation
+    # Binarize the labels for multi class ROC-AUC calculation
     classes = np.unique(y_test)
     y_test_bin = label_binarize(y_test, classes=classes)
     y_scores = model.predict_proba(x_test)  # Get probability scores
@@ -246,7 +246,7 @@ def construct_confussion_matrix(model, x_test, y_test, label_mappings, model_nam
     print(Fore.LIGHTGREEN_EX + f"Accuracy: {accuracy} | {accuracy:.4f}" + Style.RESET_ALL)
     print(Fore.LIGHTGREEN_EX + f"Weighted F1 Score: {f1} | {f1:.4f}\n" + Style.RESET_ALL)
 
-    # Decode class labels for confusion matrix
+    # Decode clas labels for confusion matrix
     class_labels = [label_mappings['class'][cls] for cls in classes]
 
     # Print labeled confusion matrix
@@ -260,11 +260,11 @@ def construct_confussion_matrix(model, x_test, y_test, label_mappings, model_nam
     # Calculate tp, tn, fp, fn for each class
     print(Fore.LIGHTGREEN_EX + "\nShowing the tp, tn, fp, fn rate for each class:" + Style.RESET_ALL)
     print('-------------------------')
-    for i, class_label in enumerate(class_labels):  # Use decoded class labels
-        tp = cm[i, i]  # True Positives for the current class
-        fp = cm[:, i].sum() - tp  # False Positives for the current class
-        fn = cm[i, :].sum() - tp  # False Negatives for the current class
-        tn = cm.sum() - (tp + fp + fn)  # True Negatives for the current class
+    for i, class_label in enumerate(class_labels):
+        tp = cm[i, i]
+        fp = cm[:, i].sum() - tp
+        fn = cm[i, :].sum() - tp
+        tn = cm.sum() - (tp + fp + fn)
 
         print(Fore.YELLOW + f"Class {class_label}:" + Style.RESET_ALL)
         print(Fore.GREEN + f"True Positives (tp): {tp}" + Style.RESET_ALL)

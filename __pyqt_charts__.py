@@ -3,9 +3,10 @@ import numpy as np
 from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.metrics import confusion_matrix
+import seaborn as sns
 from matplotlib.figure import Figure
+from sklearn.metrics import precision_recall_curve, average_precision_score
 
 from __general_utils__ import decode_predictions
 
@@ -90,7 +91,7 @@ def plot_feature_importance(model: object, feature_names: object) -> object:
 
     # Get feature importances
     importances = model.feature_importances_
-    indices = np.argsort(importances)[::-1]  # descending order
+    indices = np.argsort(importances)[::-1]
 
     fig = Figure(figsize=(10, 6))
     ax = fig.add_subplot(111)
@@ -114,9 +115,6 @@ def plot_precision_recall_curve(model: object, X_test: object, y_test: object) -
     :param y_test
     :return fig
     """
-
-    from matplotlib.figure import Figure
-    from sklearn.metrics import precision_recall_curve, average_precision_score
 
     # geet predicted probabilities
     y_scores = model.predict_proba(X_test)
@@ -150,8 +148,6 @@ def plot_prediction_distribution(y_test: object, y_pred: object, label_mappings:
         :param label_mappings
         :return fig
     """
-    from matplotlib.figure import Figure
-    import seaborn as sns
 
     # Decode numeric labels back to original class labels
     y_test_decoded = decode_predictions(pd.Series(y_test), label_mappings, 'class')

@@ -1,11 +1,9 @@
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
-import pandas as pd
 from colorama import Fore, Style
 from __preprocessing_utils__ import balance_dataset
 from sklearn.preprocessing import StandardScaler
-import numpy as np
 
 def train_linR(df, target_column):
 

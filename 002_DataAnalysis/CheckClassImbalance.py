@@ -20,10 +20,10 @@ majority_classes = class_proportions[class_proportions >= threshold].index
 # Group the minority classes into a single category
 raw['class_grouped'] = raw['class'].apply(lambda x: x if x in majority_classes else 'Other')
 
-# Plot the class distribution with major and minor groups
+# show the class distribution with major and minor groups
 plt.figure(figsize=(10, 6))
 
-# Plot the majority and minority groups together
+# show the majority and minority groups together
 sns.countplot(x='class_grouped', data=raw, order=raw['class_grouped'].value_counts().index)
 plt.title('Class Distribution: Majority vs Minority')
 plt.xticks(rotation=45)

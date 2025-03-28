@@ -7,7 +7,6 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, \
     roc_auc_score
-import matplotlib.pyplot as plt
 import time
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from imblearn.over_sampling import SMOTE
@@ -93,7 +92,7 @@ def train_model_decision_tree(df, target_column, label_mappings, label_encoders)
     X = df.drop(columns=[target_column])
     y = df[target_column]
 
-    # Perform stratified train-test split
+    # split dataset
     print(Fore.LIGHTGREEN_EX + "Performing stratified train-test split" + Style.RESET_ALL)
 
     x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
@@ -300,7 +299,7 @@ def main():
     end_time = time.time()
     print(Fore.GREEN + f"\nScript execution finished! Total time: {end_time - start_time:.2f} seconds\n" + Style.RESET_ALL)
 
-    # Plot AUC-ROC curve instead of confusion matrix
+    # Plot AUCROC curve instead of confusion matrix
     print_roc_auc(model, x_test, y_test, label_mappings, target_column)
 
 
