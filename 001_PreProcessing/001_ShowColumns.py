@@ -6,7 +6,7 @@ from tkinter import ttk
     The code performs the following:
         1. loads the dataset
         2. Replaces '?' with NaN 
-        3. Extracts column metadata (name, 000_Data type)
+        3. Extracts column metadata (name, data type)
         4. Creates a tkinter ui
         5. Adds the records that depict the columns
 """

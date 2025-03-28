@@ -7,16 +7,7 @@ from __general_utils__ import decode_predictions
 from __preprocessing_utils__ import balance_dataset
 
 def train_NB(df, target_column, label_mappings):
-    """
-            Function to train the model, Steps:
-            1. Filter rare classes, and for those apply the balancing logic
-            2. split between dependent and non dependent column
-            3. Split the dataset to test and train
-            4. Create a parameter grid for hyperparameter tuning
-            5. Create and Train the model
-            6. Apply Grid search so that the interpreter will loop throygh the available parameters and find the best ones
-            7. Print out the best model, and the statistics, then return the chosen model
-    """
+
     print(Fore.GREEN + "\nTraining Naive Bayes model" + Style.RESET_ALL)
 
     try:

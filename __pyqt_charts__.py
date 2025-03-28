@@ -12,24 +12,24 @@ from __general_utils__ import decode_predictions
 
 def plot_roc_auc(model: object, X_test: object, y_test: object) -> object:
     """
-    Function to create a plot for the AUC and ROC curves.
-    It takes the labels (classes), gets the probability metrics,
-    and calculates the AUC ROC curve for all.
-    :param model:
-    :param X_test:
-    :param y_test:
-    :return: fig
+        Function to create a plot for the AUC and ROC curves.
+        It takes the labels (classes), gets the probability metrics,
+        and calculates the AUC ROC curve for all.
+        :param model:
+        :param X_test:
+        :param y_test:
+        :return: fig
     """
 
-    classes = np.unique(y_test)  # Dynamically get unique classes
+    classes = np.unique(y_test)  # get unique classes
     y_test_bin = label_binarize(y_test, classes=classes)
-    y_scores = model.predict_proba(X_test)  # Get probability scores
+    y_scores = model.predict_proba(X_test)  # gt probability scores
 
     fig = Figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
 
     for i in range(y_test_bin.shape[1]):
-        if np.sum(y_test_bin[:, i]) == 0:  # Skip classes with no positive samples
+        if np.sum(y_test_bin[:, i]) == 0:  # Skip classes without positive samples
             print(f"Skipping class {classes[i]} (no positive samples)")
             continue
         fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_scores[:, i])
@@ -42,10 +42,8 @@ def plot_roc_auc(model: object, X_test: object, y_test: object) -> object:
     ax.set_title("Multi-Class ROC Curve")
     ax.legend()
 
-    # Move legend outside the plot and reduce font size
     ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')
 
-    # Adjust layout to make room for the legend
     fig.tight_layout()
 
     return fig
@@ -61,13 +59,13 @@ def construct_confusion_matrix_visual(model: object, X_test: object, y_test: obj
     :param model_name:
     :return: fig
     """
-    # Predict the results
+    # Predict  results
     y_pred = model.predict(X_test)
 
     # Compute confusion matrix
     cm = confusion_matrix(y_test, y_pred)
 
-    # Decode class labels for confusion matrix
+    # Decode class labels
     classes = np.unique(y_test)
     class_labels = [label_mappings['class'][cls] for cls in classes]
 
@@ -92,9 +90,8 @@ def plot_feature_importance(model: object, feature_names: object) -> object:
 
     # Get feature importances
     importances = model.feature_importances_
-    indices = np.argsort(importances)[::-1]  # Sort in descending order
+    indices = np.argsort(importances)[::-1]  # descending order
 
-    # Create the plot
     fig = Figure(figsize=(10, 6))
     ax = fig.add_subplot(111)
     ax.bar(range(len(importances)), importances[indices], align="center")
@@ -104,7 +101,6 @@ def plot_feature_importance(model: object, feature_names: object) -> object:
     ax.set_ylabel("Importance")
     ax.set_title("Feature Importance")
 
-    # Adjust layout
     fig.tight_layout()
 
     return fig
@@ -122,7 +118,7 @@ def plot_precision_recall_curve(model: object, X_test: object, y_test: object) -
     from matplotlib.figure import Figure
     from sklearn.metrics import precision_recall_curve, average_precision_score
 
-    # Get predicted probabilities
+    # geet predicted probabilities
     y_scores = model.predict_proba(X_test)
 
     # Compute precision-recall curve for each class
@@ -140,7 +136,7 @@ def plot_precision_recall_curve(model: object, X_test: object, y_test: object) -
     ax.set_xlabel("Recall")
     ax.set_ylabel("Precision")
     ax.set_title("Precision-Recall Curve")
-    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')  # Move legend outside
+    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')
     fig.tight_layout()
 
     return fig
@@ -148,11 +144,11 @@ def plot_precision_recall_curve(model: object, X_test: object, y_test: object) -
 
 def plot_prediction_distribution(y_test: object, y_pred: object, label_mappings: object) -> object:
     """
-    Function to create a distribution plot of predicted classes.
-    :param y_test
-    :param y_pred
-    :param label_mappings
-    :return fig
+        Function to create a distribution plot of predicted classes.
+        :param y_test
+        :param y_pred
+        :param label_mappings
+        :return fig
     """
     from matplotlib.figure import Figure
     import seaborn as sns
@@ -164,14 +160,13 @@ def plot_prediction_distribution(y_test: object, y_pred: object, label_mappings:
     # Create a DataFrame for visualization
     df = pd.DataFrame({'True Class': y_test_decoded, 'Predicted Class': y_pred_decoded})
 
-    # Create the plot
     fig = Figure(figsize=(10, 6))
     ax = fig.add_subplot(111)
     sns.countplot(data=df, x='Predicted Class', hue='True Class', ax=ax)
     ax.set_xlabel("Predicted Class")
     ax.set_ylabel("Count")
     ax.set_title("Distribution of Predictions")
-    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')  # Move legend outside
+    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize='small')
     fig.tight_layout()
 
     return fig

@@ -29,7 +29,7 @@ def balance_dataset(df, target_column):
     """
         Function to balance dataset
     """
-    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes proportionally..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes proportionally" + Style.RESET_ALL)
 
     # Count occurrences of each class
     class_counts = df[target_column].value_counts()
@@ -83,10 +83,10 @@ def train_model_svm(df, target_column, label_mappings, label_encoders):
         6. Apply GridSearchCV to find the best hyperparameters.
         7. Print out the best model and statistics, then return the chosen model.
     """
-    print(Fore.GREEN + "\nTraining Support Vector Machine (SVM) model..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nTraining Support Vector Machine (SVM) model" + Style.RESET_ALL)
 
     # Balance the dataset
-    print(Fore.LIGHTGREEN_EX + "Applying dataset balancing..." + Style.RESET_ALL)
+    print(Fore.LIGHTGREEN_EX + "Applying dataset balancing" + Style.RESET_ALL)
 
     df = balance_dataset(df, target_column)
 
@@ -100,7 +100,7 @@ def train_model_svm(df, target_column, label_mappings, label_encoders):
     x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
     # Perform feature scaling
-    print(Fore.LIGHTGREEN_EX + "Performing feature scaling..." + Style.RESET_ALL)
+    print(Fore.LIGHTGREEN_EX + "Performing feature scaling" + Style.RESET_ALL)
     scaler = StandardScaler()
 
     # Fit transform while preserving DataFrame structure
@@ -117,7 +117,7 @@ def train_model_svm(df, target_column, label_mappings, label_encoders):
     )
 
     # Hyperparameter tuning using GridSearchCV
-    print(Fore.LIGHTGREEN_EX + "Hyperparameter tuning using GridSearchCV..." + Style.RESET_ALL)
+    print(Fore.LIGHTGREEN_EX + "Hyperparameter tuning using GridSearchCV" + Style.RESET_ALL)
     param_grid = {
         "C": [0.1, 1, 10, 100],
         "kernel": ["linear", "rbf", "poly"],
@@ -174,7 +174,7 @@ def check_overfitting(model, x_train, y_train, x_test, y_test):
         Function to check for overfitting by comparing training and test accuracy.
         Also performs cross-validation to verify model generalization.
     """
-    print(Fore.GREEN + "\nChecking for Overfitting..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nChecking for Overfitting" + Style.RESET_ALL)
 
     # Predict on training and test sets
     y_train_pred = model.predict(x_train)
@@ -284,7 +284,7 @@ def main():
 
     start_time = time.time()
 
-    print(Fore.CYAN + "\nStarting script execution..." + Style.RESET_ALL)
+    print(Fore.CYAN + "\nStarting script execution" + Style.RESET_ALL)
 
     df = load_data(file_path)
     df = remove_unwanted_columns(df)

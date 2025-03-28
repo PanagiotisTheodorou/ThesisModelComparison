@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
     The code performs the following:
         1. Loads the dataset
         2. identifies and stores the categorical columns
-        3. Turns categorical 000_Data into numerical using One-Hot Encoding
+        3. Turns categorical data into numerical using One-Hot Encoding
         4. Stores the new column names after encoding finishes
         5. Creates a mapping between the label and numerical values of the categories
         6. Plots a categorical value distribution plot

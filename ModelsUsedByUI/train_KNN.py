@@ -9,16 +9,7 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 def train_KNN(df, target_column, label_mappings, n_neighbors=5):
-    """
-                Function to train the model, Steps:
-                1. Filter rare classes, and for those apply the balancing logic
-                2. split between dependent and non dependent column
-                3. Split the dataset to test and train
-                4. Create a parameter grid for hyperparameter tuning
-                5. Create and Train the model
-                6. Apply Grid search so that the interpreter will loop throygh the available parameters and find the best ones
-                7. Print out the best model, and the statistics, then return the chosen model
-    """
+
     print(Fore.GREEN + "\nTraining K-Nearest Neighbors (KNN) model" + Style.RESET_ALL)
 
     try:

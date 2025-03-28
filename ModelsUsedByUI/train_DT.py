@@ -10,16 +10,7 @@ import numpy as np
 
 
 def train_DT(df, target_column, label_mappings):
-    """
-           Function to train a Decision Tree model. Steps:
-           1. Filter rare classes, and for those apply the balancing logic.
-           2. Split between dependent and non-dependent columns.
-           3. Split the dataset into test and train.
-           4. Create a parameter grid for hyperparameter tuning.
-           5. Create and train the model.
-           6. Apply GridSearchCV to find the best parameters.
-           7. Print out the best model and statistics, then return the chosen model.
-    """
+
     print(Fore.GREEN + "\nTraining Decision Tree model" + Style.RESET_ALL)
 
     try:

@@ -8,18 +8,18 @@ def balance_dataset(df, target_column):
     """
         Function to balance dataset
     """
-    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes proportionally..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nBalancing dataset by oversampling minority classes proportionally" + Style.RESET_ALL)
 
     # Count occurrences of each class
     class_counts = df[target_column].value_counts()
     majority_class = class_counts.idxmax()
     minority_classes = class_counts[class_counts.index != majority_class].index
 
-    # Compute total occurrences of all minority classes
+    # get total occurrences of all minority classes
     total_minority_occurrences = class_counts[minority_classes].sum()
     num_minority_classes = len(minority_classes)
 
-    # Determine target occurrences for each minority class
+    # get target occurrences for each minority class
     target_counts = total_minority_occurrences // num_minority_classes
     sampling_strategy = {}
 
@@ -27,7 +27,7 @@ def balance_dataset(df, target_column):
         if class_counts[cls] < target_counts:
             sampling_strategy[cls] = target_counts
 
-    # Apply SMOTE for oversampling
+    # Apply SMOTE
     X = df.drop(columns=[target_column])
     y = df[target_column]
     smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
@@ -35,7 +35,7 @@ def balance_dataset(df, target_column):
     resampled_df = pd.DataFrame(X_resampled, columns=X.columns)
     resampled_df[target_column] = y_resampled
 
-    # Apply equal sampling of majority class instances
+    #  equaly sample the class instances
     final_data = []
     for cls in minority_classes:
         minority_samples = resampled_df[resampled_df[target_column] == cls]
@@ -53,16 +53,15 @@ def balance_dataset(df, target_column):
 
 def feature_selection(X_train, y_train, X_test, threshold=0.01):
     """
-    Perform feature selection using Random Forest feature importance.
-    Features with importance greater than the threshold are selected.
+        Perform feature selection using Random Forest feature importance, deatures with importance greater than the threshold are selected.
     """
-    print(Fore.GREEN + "\nPerforming feature selection..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nPerforming feature selection" + Style.RESET_ALL)
 
     # Train a Random Forest model to get feature importance
     rf = RandomForestClassifier(random_state=42)
     rf.fit(X_train, y_train)
 
-    # Get feature importances
+    #get feature importances
     importances = rf.feature_importances_
     feature_names = X_train.columns
 

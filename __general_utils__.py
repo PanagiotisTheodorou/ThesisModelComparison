@@ -36,7 +36,7 @@ def remove_outliers(df: pd.DataFrame) -> object:
     :return: df
     :return df_no_outliers
     """
-    print(Fore.GREEN + "\nRemoving outliers..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nRemoving outliers" + Style.RESET_ALL)
     numerical_columns = ["age", "TSH", "T3", "TT4", "T4U", "FTI", "TBG"]
     q1 = df[numerical_columns].quantile(0.25)
     q3 = df[numerical_columns].quantile(0.75)
@@ -55,7 +55,7 @@ def fill_missing_values(df: object) -> object:
     :param df:
     :return: df
     """
-    print(Fore.GREEN + "\nFilling missing values..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nFilling missing values" + Style.RESET_ALL)
     for col in df.columns:
         df[col] = df[col].fillna(df[col].mode()[0] if df[col].dtype == 'object' else df[col].mean())
     print(Fore.LIGHTGREEN_EX + "Missing values filled.\n" + Style.RESET_ALL)
@@ -69,7 +69,7 @@ def encode_categorical(df: object) -> object:
     :param df:
     :return:
     """
-    print(Fore.GREEN + "\nEncoding categorical variables..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nEncoding categorical variables" + Style.RESET_ALL)
     label_encoders = {}
     label_mappings = {}
     for col in df.select_dtypes(include=['object']).columns:
