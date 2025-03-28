@@ -4,6 +4,9 @@
 [PTheodorou@uclan.ac.uk](mailto:PTheodorou@uclan.ac.uk)  
 [GitHub](https://github.com/PanagiotisTheodorou) | [LinkedIn](https://www.linkedin.com/in/panagiotis-theodorou-a16519303/)
 
+**Git URL**
+https://github.com/PanagiotisTheodorou/ThesisModelComparison
+
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary><h2>Table of Contents</h2></summary>
