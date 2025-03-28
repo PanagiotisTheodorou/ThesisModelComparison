@@ -11,33 +11,32 @@ import matplotlib.pyplot as plt
         6. Plots a categorical value distribution plot
 """
 
-# Load the dataset
 file_path = "../000_Data/003_dataset_after_removing_outliers.csv"
 df = pd.read_csv(file_path)
 
-# Identify categorical columns (non-numeric)
+# Identify categorical coluns
 categorical_columns = df.select_dtypes(include=['object', 'category']).columns.tolist()
 
 # Store unique values for each categorical column before encoding
 original_categories = {col: df[col].unique().tolist() for col in categorical_columns}
 
-# Apply One-Hot Encoding (OHE)
+# Apply One-Hot Encoding
 df_encoded = pd.get_dummies(df, columns=categorical_columns, drop_first=False)  # Keep all categories for reference
 
-# Store new column names for encoded categories
+# Store new column names
 encoded_categories = [col for col in df_encoded.columns if col not in df.columns or col in categorical_columns]
 
-# Create a mapping table of original vs encoded values
+# mapping table for - original vs encoded values
 encoding_map = []
 for col in categorical_columns:
     for val in original_categories[col]:
         encoded_cols = [f"{col}_{val}" if f"{col}_{val}" in df_encoded.columns else None]
         encoding_map.append([col, val] + encoded_cols)
 
-# Convert to DataFrame for display
+# Convert to data frame
 encoding_df = pd.DataFrame(encoding_map, columns=["Original Column", "Original Value", "Encoded Column"])
 
-# Plot categorical value distributions before encoding
+# plot categorical value distributions before encoding
 fig, ax = plt.subplots(figsize=(10, 6))
 df[categorical_columns].nunique().plot(kind='bar', ax=ax, color='skyblue')
 ax.set_title("Number of Unique Values in Categorical Columns Before Encoding")
@@ -46,5 +45,4 @@ ax.set_xlabel("Categorical Columns")
 plt.xticks(rotation=45)
 plt.show()
 
-# Display encoding table
 encoding_df
