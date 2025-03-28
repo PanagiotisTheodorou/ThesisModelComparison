@@ -271,6 +271,21 @@ if dataset is not None:
         st.pyplot(fig)
         st.write("This heatmap shows how different features correlate with each other.")
 
+st.markdown("---")
+st.header("Referral Source Encoding Reference")
+st.write("""
+The 'referral_source' feature in the dataset is encoded numerically as follows:
+
+- **STMW**: 0
+- **SVHC**: 1
+- **SVHD**: 2
+- **SVI**: 3
+- **WEST**: 4
+- **other**: 5
+
+This encoding is used internally by the prediction models to understand the origin of patient referrals.
+""")
+
 # footer
 st.markdown("---")
 st.markdown(
