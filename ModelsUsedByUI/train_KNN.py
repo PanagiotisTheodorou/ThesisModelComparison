@@ -10,54 +10,56 @@ import numpy as np
 
 def train_KNN(df, target_column, label_mappings, n_neighbors=5):
     """
-    Function to train a K-Nearest Neighbors (KNN) model with error handling and debugging.
+                Function to train the model, Steps:
+                1. Filter rare classes, and for those apply the balancing logic
+                2. split between dependent and non dependent column
+                3. Split the dataset to test and train
+                4. Create a parameter grid for hyperparameter tuning
+                5. Create and Train the model
+                6. Apply Grid search so that the interpreter will loop throygh the available parameters and find the best ones
+                7. Print out the best model, and the statistics, then return the chosen model
     """
-    print(Fore.GREEN + "\nTraining K-Nearest Neighbors (KNN) model..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nTraining K-Nearest Neighbors (KNN) model" + Style.RESET_ALL)
 
     try:
-        # Step 1: Filter rare classes
-        print("Step 1: Filtering rare classes...")
-        class_counts = df[target_column].value_counts()
-        valid_classes = class_counts[class_counts >= 10].index
-        df = df[df[target_column].isin(valid_classes)]
-        print(f"Filtered dataset shape: {df.shape}")
+        #Balance the dataset
+        print("Step 2: Balancing the dataset")
 
-        # Step 2: Balance the dataset
-        print("Step 2: Balancing the dataset...")
         df = balance_dataset(df, target_column)
+
         print(f"Balanced dataset shape: {df.shape}")
 
-        # Step 3: Split into features and target
-        print("Step 3: Splitting into features and target...")
+        # Split into features - X and target - y
+        print("Splitting into features and target")
         X = df.drop(columns=[target_column])
         y = df[target_column]
         print(f"Features shape: {X.shape}, Target shape: {y.shape}")
 
-        # Step 4: Split into train and test sets
-        print("Step 4: Splitting into train and test sets...")
+        # Split into train and test sets
+        print("Splitting into train and test sets")
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
         print(f"Train set shape: {X_train.shape}, Test set shape: {X_test.shape}")
 
-        # Step 5: Scale the features
-        print("Step 5: Scaling the features...")
+        # Scale the features
+        print("Scaling the features")
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
         X_test = scaler.transform(X_test)
         print("Features scaled successfully.")
 
-        # Step 6: Train the KNN model
-        print("Step 6: Training the KNN model...")
+        # Train the Knn model
+        print("Training the KNN model")
         model = KNeighborsClassifier(n_neighbors=n_neighbors)
         model.fit(X_train, y_train)
         print("Model training completed.")
 
-        # Step 7: Make predictions
-        print("Step 7: Making predictions...")
+        #Make predictions
+        print("Making predictions")
         predictions = model.predict(X_test)
         print("Predictions generated.")
 
-        # Step 8: Calculate metrics
-        print("Step 8: Calculating metrics...")
+        # Calculate metrics
+        print("Calculating metrics")
         accuracy_scr = accuracy_score(y_test, predictions)
         precision_scr = precision_score(y_test, predictions, average="weighted")
         recall_scr = recall_score(y_test, predictions, average="weighted")
@@ -68,14 +70,14 @@ def train_KNN(df, target_column, label_mappings, n_neighbors=5):
         print(Fore.LIGHTGREEN_EX + f"Recall: {recall_scr:.4f}" + Style.RESET_ALL)
         print(Fore.LIGHTGREEN_EX + f"F1-Score: {f1_scr:.4f}" + Style.RESET_ALL)
 
-        # Step 9: Decode numeric labels back to original class labels
-        print("Step 9: Decoding predictions...")
+        # Decode numeric labels back to original class labels
+        print("Decoding predictions")
         y_test_decoded = decode_predictions(pd.Series(y_test), label_mappings, target_column)
         predictions_decoded = decode_predictions(pd.Series(predictions), label_mappings, target_column)
         print("Predictions decoded.")
 
-        # Step 10: Print classification report
-        print("Step 10: Generating classification report...")
+        # Print classification report
+        print("Generating classification report")
         cr_dict = classification_report(y_test_decoded, predictions_decoded, output_dict=True)
         print(classification_report(y_test_decoded, predictions_decoded))
 

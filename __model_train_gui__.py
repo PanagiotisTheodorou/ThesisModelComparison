@@ -37,9 +37,9 @@ from ModelsUsedByUI.train_DT import train_DT
 
 from ModelsUsedByUI.train_KNN import train_KNN
 
-from ModelsUsedByUI.train_NV import train_naive_bayes
+from ModelsUsedByUI.train_NV import train_NB
 
-from ModelsUsedByUI.train_LR import train_LR
+from ModelsUsedByUI.train_LogR import train_LogR
 
 from __postprocessing_utils__ import construct_confussion_matrix_logical, check_overfitting
 
@@ -91,10 +91,10 @@ class MainWindow(QMainWindow):
         self.model_options = {
             "Random Forest": train_RFC,
             "Support Vector Machine (SVM)": train_SVM,
-            "Linear Regression": train_LR,
+            "Logistic Regression": train_LogR,
             "Decision Tree": train_DT,
             "KNN": train_KNN,
-            "Naive Bayes": train_naive_bayes
+            "Naive Bayes": train_NB
         }
 
         self.initUI()

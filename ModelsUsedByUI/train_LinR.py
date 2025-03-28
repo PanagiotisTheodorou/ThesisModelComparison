@@ -7,63 +7,65 @@ from __preprocessing_utils__ import balance_dataset
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 
-def train_linear_regression(df, target_column):
+def train_linR(df, target_column):
     """
-    Function to train a Linear Regression model with error handling and debugging.
+                Function to train the model, Steps:
+                1. Filter rare classes, and for those apply the balancing logic
+                2. split between dependent and non dependent column
+                3. Split the dataset to test and train
+                4. Create a parameter grid for hyperparameter tuning
+                5. Create and Train the model
+                6. Apply Grid search so that the interpreter will loop throygh the available parameters and find the best ones
+                7. Print out the best model, and the statistics, then return the chosen model
     """
-    print(Fore.GREEN + "\nTraining Linear Regression model..." + Style.RESET_ALL)
+    print(Fore.GREEN + "\nTraining Linear Regression model" + Style.RESET_ALL)
 
     try:
-        # Step 1: Filter rare classes
-        print("Step 1: Filtering rare classes...")
-        class_counts = df[target_column].value_counts()
-        valid_classes = class_counts[class_counts >= 10].index
-        df = df[df[target_column].isin(valid_classes)]
-        print(f"Filtered dataset shape: {df.shape}")
+        # Balance the dataset
+        print("Balancing the dataset")
 
-        # Step 2: Balance the dataset
-        print("Step 2: Balancing the dataset...")
         df = balance_dataset(df, target_column)
+
         print(f"Balanced dataset shape: {df.shape}")
 
-        # Step 3: Split into features and target
-        print("Step 3: Splitting into features and target...")
+        # Split into features - X and target - y
+        print("Splitting into features and target")
         X = df.drop(columns=[target_column])
         y = df[target_column]
         print(f"Features shape: {X.shape}, Target shape: {y.shape}")
 
-        # Step 4: Split into train and test sets
-        print("Step 4: Splitting into train and test sets...")
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        print(f"Train set shape: {X_train.shape}, Test set shape: {X_test.shape}")
+        #Split into train and test sets
+        print("Splitting into train and test sets")
+        x_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        print(f"Train set shape: {x_train.shape}, Test set shape: {X_test.shape}")
 
-        # Step 5: Scale the features
-        print("Step 5: Scaling the features...")
+        # Feature Scaling
+        print("Scaling the features")
         scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
+        x_train = scaler.fit_transform(x_train)
         X_test = scaler.transform(X_test)
         print("Features scaled successfully.")
 
-        # Step 6: Train the Linear Regression model
-        print("Step 6: Training the Linear Regression model...")
+        # Train the Linear Regression model
+        print("Training the Linear Regression model")
         model = LinearRegression()
-        model.fit(X_train, y_train)
+        model.fit(x_train, y_train)
         print("Model training completed.")
 
-        # Step 7: Make predictions
-        print("Step 7: Making predictions...")
+        #Make predictions
+        print("Making predictions")
         predictions = model.predict(X_test)
         print("Predictions generated.")
 
-        # Step 8: Calculate metrics
-        print("Step 8: Calculating metrics...")
+        # Calculate metrics
+        print("Calculating metrics")
         mse = mean_squared_error(y_test, predictions)
         r2 = r2_score(y_test, predictions)
 
         print(Fore.LIGHTGREEN_EX + f"Mean Squared Error: {mse:.4f}" + Style.RESET_ALL)
         print(Fore.LIGHTGREEN_EX + f"R2 Score: {r2:.4f}" + Style.RESET_ALL)
 
-        return model, X_train, X_test, y_train, y_test, mse, r2
+        return model, x_train, X_test, y_train, y_test, mse, r2
 
     except Exception as e:
         print(Fore.RED + f"\nError during model training: {str(e)}" + Style.RESET_ALL)
